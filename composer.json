@@ -1,8 +1,8 @@
 {
-    "name": "appitnetwork/yii2-wordpress-themes"
+    "name": "appitnetwork/yii2-wordpress-themes",
     "description": "Yii2 extension for using wordpress themes with the framework",
     "type": "yii2-extension",
-    "keywords": ["yii2","extension","appitnetwork"],
+    "keywords": ["yii2","extension","appitnetwork", "wordpress theme"],
     "license": "BSD-3-Clause",
     "authors": [
         {
@@ -15,7 +15,7 @@
     },
     "autoload": {
         "psr-4": {
-            "appitnetwork\\extended\\": "src"
+            "appitnetwork\\wpthemes\\": "src"
         }
     }
 }
