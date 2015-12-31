@@ -1,0 +1,21 @@
+{
+    "name": "appitnetwork/yii2-wordpress-themes"
+    "description": "Yii2 extension for using wordpress themes with the framework",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension","appitnetwork"],
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Hanafi Ahmat",
+            "email": "hanafi.ahmat@appitnetwork.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "2.0.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "appitnetwork\\extended\\": "src"
+        }
+    }
+}
