@@ -1,2 +1,2 @@
 # yii2-wordpress-themes
-Uses wordpress themes on Yii2
+Yii2 extension for using wordpress themes with the framework
