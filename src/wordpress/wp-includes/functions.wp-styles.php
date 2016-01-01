@@ -112,7 +112,7 @@ function wp_add_inline_style( $handle, $data ) {
  */
 function wp_register_style( $handle, $src, $deps = array(), $ver = false, $media = 'all' ) {
 	_wp_scripts_maybe_doing_it_wrong( __FUNCTION__ );
-
+		
 	return wp_styles()->add( $handle, $src, $deps, $ver, $media );
 }
 

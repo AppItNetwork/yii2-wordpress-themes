@@ -1659,7 +1659,7 @@ class wpdb {
 		$this->bail( $message, 'db_connect_fail' );
 
 		// Call dead_db() if bail didn't die, because this database is no more. It has ceased to be (at least temporarily).
-		pr('wp-db -> check_connection()');die;dead_db();
+		dead_db();
 	}
 
 	/**

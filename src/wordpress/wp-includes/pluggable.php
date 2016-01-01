@@ -1004,12 +1004,9 @@ if ( !function_exists('is_user_logged_in') ) :
  * @return bool True if user is logged in, false if not logged in.
  */
 function is_user_logged_in() {
-	$user = Yii::$app->user;
-	return !$user->isGuest;
-	
-	// $user = wp_get_current_user();
+	$user = wp_get_current_user();
 
-	// return $user->exists();
+	return $user->exists();
 }
 endif;
 

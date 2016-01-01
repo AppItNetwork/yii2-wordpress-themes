@@ -53,10 +53,10 @@ function get_option( $option, $default = false ) {
 	if ( defined( 'WP_SETUP_CONFIG' ) )
 		return false;
 
-	// if ( ! wp_installing() ) {
+	if ( ! wp_installing() ) {
 		// prevent non-existent options from triggering multiple queries
-		// $notoptions = wp_cache_get( 'notoptions', 'options' );
-		// if ( isset( $notoptions[ $option ] ) ) {
+		$notoptions = wp_cache_get( 'notoptions', 'options' );
+		if ( isset( $notoptions[ $option ] ) ) {
 			/**
 			 * Filter the default value for an option.
 			 *
@@ -69,18 +69,18 @@ function get_option( $option, $default = false ) {
 			 *                        in the database.
 			 * @param string $option  Option name.
 			 */
-		// 	return apply_filters( 'default_option_' . $option, $default, $option );
-		// }
+			return apply_filters( 'default_option_' . $option, $default, $option );
+		}
 
 		$alloptions = wp_load_alloptions();
 
 		if ( isset( $alloptions[$option] ) ) {
 			$value = $alloptions[$option];
 		} else {
-			pr('option.php -> get_option( "'.$option.'" )');die;
 			$value = wp_cache_get( $option, 'options' );
 
 			if ( false === $value ) {
+				pr($option);die('get_option');
 				$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", $option ) );
 
 				// Has to be get_row instead of get_var because of funkiness with 0, false, null values
@@ -99,17 +99,17 @@ function get_option( $option, $default = false ) {
 				}
 			}
 		}
-	// } else {
-	// 	$suppress = $wpdb->suppress_errors();
-	// 	$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", $option ) );
-	// 	$wpdb->suppress_errors( $suppress );
-	// 	if ( is_object( $row ) ) {
-	// 		$value = $row->option_value;
-	// 	} else {
-	// 		/** This filter is documented in wp-includes/option.php */
-	// 		return apply_filters( 'default_option_' . $option, $default, $option );
-	// 	}
-	// }
+	} else {
+		$suppress = $wpdb->suppress_errors();
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", $option ) );
+		$wpdb->suppress_errors( $suppress );
+		if ( is_object( $row ) ) {
+			$value = $row->option_value;
+		} else {
+			/** This filter is documented in wp-includes/option.php */
+			return apply_filters( 'default_option_' . $option, $default, $option );
+		}
+	}
 
 	// If home is not set use siteurl.
 	if ( 'home' == $option && '' == $value )
@@ -170,6 +170,8 @@ function form_option( $option ) {
  * @return array List of all options.
  */
 function wp_load_alloptions() {
+	global $wpdb;
+	
 	$alloptions = [
 		'siteurl' => Yii::$app->request->hostInfo,
 		'home' => Yii::$app->request->hostInfo,
@@ -209,8 +211,9 @@ function wp_load_alloptions() {
 		'gmt_offset' => '0',
 		'default_email_category' => '1',
 		'recently_edited' => '',
-		'template' => 'twentythirteen',
-		'stylesheet' => 'twentythirteen',
+		'template' => Yii::$app->view->theme->selectedTheme,
+		'stylesheet' => Yii::$app->view->theme->selectedTheme,
+		'theme_mods_'.Yii::$app->view->theme->selectedTheme => '',
 		'comment_whitelist' => '1',
 		'blacklist_keys' => '',
 		'comment_registration' => '0',
@@ -257,7 +260,7 @@ function wp_load_alloptions() {
 		'default_post_format' => '0',
 		'link_manager_enabled' => '0',
 		'initial_db_version' => '31536',
-		'wp_user_roles' => '',
+		$wpdb->tablePrefix . 'user_roles' => '',
 		'widget_search' => 'a:1:{s:12:"_multiwidget";i:1;}',
 		'widget_recenposts' => 'a:1:{s:12:"_multiwidget";i:1;}',
 		'widget_recencomments' => 'a:1:{s:12:"_multiwidget";i:1;}',
@@ -298,6 +301,8 @@ function wp_load_alloptions() {
 		'_transient_doing_cron' => '',
 		'_transient_timeout_is_multi_author' => '',
 		'_transient_is_multi_author' => '',
+		'widget_widget_twentyfourteen_ephemera' => '',
+		'featured-content' => ''
 	];
 
 	return $alloptions;
@@ -435,7 +440,7 @@ function update_option( $option, $value, $autoload = null ) {
 
 	// $result = $wpdb->update( $wpdb->options, $update_args, array( 'option_name' => $option ) );
 	// if ( ! $result )
-		return true;//return false;
+	// 	return false;
 
 	$notoptions = wp_cache_get( 'notoptions', 'options' );
 	if ( is_array( $notoptions ) && isset( $notoptions[$option] ) ) {
@@ -605,10 +610,9 @@ function delete_option( $option ) {
 
 	wp_protect_special_option( $option );
 
-	// pr($option);die;
 	// Get the ID, if no ID then return
-	// $row = $wpdb->get_row( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option ) );
-	// if ( is_null( $row ) )
+	$row = $wpdb->get_row( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option ) );
+	if ( is_null( $row ) )
 		return false;
 
 	/**

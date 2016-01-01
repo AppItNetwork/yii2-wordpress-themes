@@ -516,6 +516,7 @@ function locate_template($template_names, $load = false, $require_once = true ) 
 			break;
 		}
 	}
+	// pr('locate_template');pr(STYLESHEETPATH);pr($template_names);pr($load);pr($located);//die;
 
 	if ( $load && '' != $located )
 		load_template( $located, $require_once );

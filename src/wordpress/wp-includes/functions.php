@@ -1395,7 +1395,6 @@ function is_blog_installed() {
 
 		// Die with a DB error.
 		$wpdb->error = sprintf( __( 'One or more database tables are unavailable. The database may need to be <a href="%s">repaired</a>.' ), 'maint/repair.php?referrer=is_blog_installed' );
-		pr('functions -> is_blog_installed()');die;
 		dead_db();
 	}
 

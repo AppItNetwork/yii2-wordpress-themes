@@ -236,9 +236,30 @@ final class WP_Post {
 	 *
 	 * @param WP_Post|object $post Post object.
 	 */
-	public function __construct( $post ) {
-		foreach ( get_object_vars( $post ) as $key => $value )
-			$this->$key = $value;
+	// public function __construct( $post ) {
+	public function __construct( $post = null ) {
+		if ( is_object($post) ) {
+			foreach ( get_object_vars( $post ) as $key => $value )
+				$this->$key = $value;
+		} else {
+			$this->initEmptyObject( $post );
+		}
+
+	}
+
+	public function initEmptyObject( $post = null ) {
+		// pr(get_class_methods(Yii::$app->controller));die;
+		if (is_array($post)) {
+			foreach ( $post as $key => $value ) {
+				if (isset($this->$key)) {
+					$this->$key = $value;
+				}
+			}
+		} else {
+			$this->post_type = 'page';
+			$this->post_status = 'publish';
+			$this->post_title = 'Empty Page';
+		}
 	}
 
 	/**

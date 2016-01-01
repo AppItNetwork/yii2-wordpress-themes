@@ -1,6 +1,6 @@
 <?php
 
-namespace appitnetwork\extended;
+namespace appitnetwork\wpthemes;
 
 /**
  * This is just an example.

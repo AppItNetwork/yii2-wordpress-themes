@@ -116,20 +116,22 @@ class WP_User {
 	 * @param int $blog_id Optional Blog ID, defaults to current blog.
 	 */
 	public function __construct( $id = 0, $name = '', $blog_id = '' ) {
-		// if ( ! isset( self::$back_compat_keys ) ) {
-		// 	$prefix = $GLOBALS['wpdb']->tablePrefix;
-		// 	self::$back_compat_keys = array(
-		// 		'user_firstname' => 'first_name',
-		// 		'user_lastname' => 'last_name',
-		// 		'user_description' => 'description',
-		// 		'user_level' => $prefix . 'user_level',
-		// 		$prefix . 'usersettings' => $prefix . 'user-settings',
-		// 		$prefix . 'usersettingstime' => $prefix . 'user-settings-time',
-		// 	);
-		// }
+		$this->data = new stdClass;
+		return;
+		
+		if ( ! isset( self::$back_compat_keys ) ) {
+			$prefix = $GLOBALS['wpdb']->prefix;
+			self::$back_compat_keys = array(
+				'user_firstname' => 'first_name',
+				'user_lastname' => 'last_name',
+				'user_description' => 'description',
+				'user_level' => $prefix . 'user_level',
+				$prefix . 'usersettings' => $prefix . 'user-settings',
+				$prefix . 'usersettingstime' => $prefix . 'user-settings-time',
+			);
+		}
 
-		// if ( $id instanceof WP_User ) {
-		if ( $id instanceof \common\models\User ) {
+		if ( $id instanceof WP_User ) {
 			$this->init( $id->data, $blog_id );
 			return;
 		} elseif ( is_object( $id ) ) {

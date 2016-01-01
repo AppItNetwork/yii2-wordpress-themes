@@ -2498,6 +2498,14 @@ class WP_Query {
 	 * @return array List of posts.
 	 */
 	public function get_posts() {
+		/*
+		 * @todo  hanafi -> get the website's posts
+		 */
+		$this->post_count = 0;
+		$this->posts = array();
+		return $this->posts;
+
+
 		global $wpdb;
 
 		$this->parse_query();
@@ -4984,6 +4992,8 @@ class WP_Query {
  * @global WP_Rewrite $wp_rewrite WordPress rewrite component.
  */
 function wp_old_slug_redirect() {
+	return;
+
 	global $wp_query, $wp_rewrite;
 
 	if ( '' !== $wp_query->query_vars['name'] ) :

@@ -114,7 +114,21 @@ function get_the_permalink( $post = 0, $leavename = false ) {
  * @param bool        $leavename Optional. Whether to keep post name or page name. Default false.
  * @return string|false The permalink URL or false if post does not exist.
  */
-function get_permalink( $post = 0, $leavename = false ) {
+function get_permalink( $post = 0, $args = false ) {
+	// pr($args);die;
+	if ( !is_array($args) && !is_object($args) ) {
+		return get_permalink_ori( $post, $leavename );
+	} else if ( is_array($args) ) {
+		if ( array_key_exists('leavename', $args) ) {
+			$leavename = $args['leavename'];
+		}
+	} else if ( is_object($args) && ($args instanceof \appitnetwork\wpthemes\helpers\WP_Post) ) {
+		return $args->guid;
+	}
+	return false;
+}
+
+function get_permalink_ori( $post = 0, $leavename = false ) {
 	$rewritecode = array(
 		'%year%',
 		'%monthnum%',

@@ -593,7 +593,8 @@ function get_theme_root_uri( $stylesheet_or_template = false, $theme_root = fals
 			else
 				$theme_root_uri = $theme_root;
 		} else {
-			$theme_root_uri = content_url( $theme_root );
+			// $theme_root_uri = content_url( $theme_root );
+			$theme_root_uri = content_url(  );
 		}
 	} else {
 		$theme_root_uri = content_url( 'themes' );

@@ -472,9 +472,7 @@ function is_multi_author() {
 	global $wpdb;
 
 	if ( false === ( $is_multi_author = get_transient( 'is_multi_author' ) ) ) {
-		$rows = Yii::$app->controller->getNumberOfBlogAuthors();
-		// pr($rows);die;
-		// $rows = (array) $wpdb->get_col("SELECT DISTINCT post_author FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish' LIMIT 2");
+		$rows = (array) $wpdb->get_col("SELECT DISTINCT post_author FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish' LIMIT 2");
 		$is_multi_author = 1 < count( $rows ) ? 1 : 0;
 		set_transient( 'is_multi_author', $is_multi_author );
 	}

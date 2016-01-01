@@ -278,7 +278,6 @@ function ms_not_installed( $domain, $path ) {
 	global $wpdb;
 
 	if ( ! is_admin() ) {
-		pr('ms-load -> ms_not_installed()');die;
 		dead_db();
 	}
 

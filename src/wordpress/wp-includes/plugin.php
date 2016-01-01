@@ -499,6 +499,7 @@ function do_action($tag, $arg = '') {
 			array_pop($wp_current_filter);
 		return;
 	}
+// pr($tag);pr($wp_filter[$tag]);pr($wp_actions);//die;
 
 	if ( !isset($wp_filter['all']) )
 		$wp_current_filter[] = $tag;

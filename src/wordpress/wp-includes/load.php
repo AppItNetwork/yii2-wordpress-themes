@@ -357,16 +357,18 @@ function wp_set_lang_dir() {
  */
 function require_wp_db() {
 	global $wpdb;
-	$wpdb = Yii::$app->db;
 
 	// require_once( ABSPATH . WPINC . '/wp-db.php' );
 	// if ( file_exists( WP_CONTENT_DIR . '/db.php' ) )
 	// 	require_once( WP_CONTENT_DIR . '/db.php' );
+	
+	$wpdb = Yii::$app->db;
+	// pr($wpdb);die;
+	
+	if ( isset( $wpdb ) )
+		return;
 
-	// if ( isset( $wpdb ) )
-	// 	return;
-
-	// $wpdb = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+	$wpdb = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 }
 
 /**
@@ -383,21 +385,20 @@ function require_wp_db() {
  */
 function wp_set_wpdb_vars() {
 	global $wpdb, $table_prefix;
-	if ( !empty( $wpdb->error ) ) {
-		pr('load -> wp_set_wpdb_vars()');die;
+	pr($wpdb);die;
+	if ( !empty( $wpdb->error ) )
 		dead_db();
-	}
 
-	// $wpdb->field_types = array( 'post_author' => '%d', 'post_parent' => '%d', 'menu_order' => '%d', 'term_id' => '%d', 'term_group' => '%d', 'term_taxonomy_id' => '%d',
-	// 	'parent' => '%d', 'count' => '%d','object_id' => '%d', 'term_order' => '%d', 'ID' => '%d', 'comment_ID' => '%d', 'comment_post_ID' => '%d', 'comment_parent' => '%d',
-	// 	'user_id' => '%d', 'link_id' => '%d', 'link_owner' => '%d', 'link_rating' => '%d', 'option_id' => '%d', 'blog_id' => '%d', 'meta_id' => '%d', 'post_id' => '%d',
-	// 	'user_status' => '%d', 'umeta_id' => '%d', 'comment_karma' => '%d', 'comment_count' => '%d',
-	// 	// multisite:
-	// 	'active' => '%d', 'cat_id' => '%d', 'deleted' => '%d', 'lang_id' => '%d', 'mature' => '%d', 'public' => '%d', 'site_id' => '%d', 'spam' => '%d',
-	// );
+	$wpdb->field_types = array( 'post_author' => '%d', 'post_parent' => '%d', 'menu_order' => '%d', 'term_id' => '%d', 'term_group' => '%d', 'term_taxonomy_id' => '%d',
+		'parent' => '%d', 'count' => '%d','object_id' => '%d', 'term_order' => '%d', 'ID' => '%d', 'comment_ID' => '%d', 'comment_post_ID' => '%d', 'comment_parent' => '%d',
+		'user_id' => '%d', 'link_id' => '%d', 'link_owner' => '%d', 'link_rating' => '%d', 'option_id' => '%d', 'blog_id' => '%d', 'meta_id' => '%d', 'post_id' => '%d',
+		'user_status' => '%d', 'umeta_id' => '%d', 'comment_karma' => '%d', 'comment_count' => '%d',
+		// multisite:
+		'active' => '%d', 'cat_id' => '%d', 'deleted' => '%d', 'lang_id' => '%d', 'mature' => '%d', 'public' => '%d', 'site_id' => '%d', 'spam' => '%d',
+	);
 
-	$prefix = $wpdb->tablePrefix;
-	
+	$prefix = $wpdb->set_prefix( $table_prefix );
+
 	if ( is_wp_error( $prefix ) ) {
 		wp_load_translations_early();
 		wp_die(
@@ -497,16 +498,16 @@ function wp_not_installed() {
 			wp_die( __( 'The site you have requested is not installed properly. Please contact the system administrator.' ) );
 		}
 	} elseif ( ! is_blog_installed() && ! wp_installing() ) {
-		nocache_headers();
+		// nocache_headers();
 
-		require( ABSPATH . WPINC . '/kses.php' );
-		require( ABSPATH . WPINC . '/pluggable.php' );
-		require( ABSPATH . WPINC . '/formatting.php' );
+		// require( ABSPATH . WPINC . '/kses.php' );
+		// require( ABSPATH . WPINC . '/pluggable.php' );
+		// require( ABSPATH . WPINC . '/formatting.php' );
 
-		$link = wp_guess_url() . '/wp-admin/install.php';
+		// $link = wp_guess_url() . '/wp-admin/install.php';
 
-		wp_redirect( $link );
-		die();
+		// wp_redirect( $link );
+		// die();
 	}
 }
 
@@ -667,16 +668,12 @@ function wp_clone( $object ) {
  * @return bool True if inside WordPress administration interface, false otherwise.
  */
 function is_admin() {
-	if ( is_user_logged_in() )
-		return false;
-	else
-		return false;
-	// if ( isset( $GLOBALS['current_screen'] ) )
-	// 	return $GLOBALS['current_screen']->in_admin();
-	// elseif ( defined( 'WP_ADMIN' ) )
-	// 	return WP_ADMIN;
+	if ( isset( $GLOBALS['current_screen'] ) )
+		return $GLOBALS['current_screen']->in_admin();
+	elseif ( defined( 'WP_ADMIN' ) )
+		return WP_ADMIN;
 
-	// return false;
+	return false;
 }
 
 /**
