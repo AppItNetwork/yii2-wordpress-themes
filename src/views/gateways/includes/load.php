@@ -27,3 +27,12 @@ function is_multisite() {
 function wp_installing( $is_installing = null ) {
 	return false;	
 }
+
+function wp_using_ext_object_cache( $using = null ) {
+	global $_wp_using_ext_object_cache;
+	$current_using = $_wp_using_ext_object_cache;
+	if ( null !== $using )
+		$_wp_using_ext_object_cache = $using;
+	return $current_using;
+}
+

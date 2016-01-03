@@ -1,4 +1,6 @@
 <?php
+use yii\helpers\Html;
+
 function get_header( $name = null ) {
 	do_action( 'get_header', $name );
 
@@ -313,7 +315,11 @@ function wp_title( $sep = '&raquo;', $display = true, $seplocation = '' ) {
 }
 
 function wp_head() {
+	echo Html::csrfMetaTags();
+	Yii::$app->view->head();
 	do_action( 'wp_head' );
+
+	Yii::$app->view->beginBody();
 }
 
 function get_search_query( $escaped = true ) {
@@ -326,6 +332,7 @@ function get_search_query( $escaped = true ) {
 
 function wp_footer() {
 	do_action( 'wp_footer' );
+	Yii::$app->view->endBody();
 }
 
 function _wp_render_title_tag() {
@@ -485,13 +492,13 @@ function get_the_generator( $type = '' ) {
 
 	switch ( $type ) {
 		case 'html':
-			$gen = '<meta name="generator" content="WordPress ' . get_bloginfo( 'version' ) . '">';
+			$gen = '<meta name="generator" content="' . Yii::$app->name . '">';
 			break;
 		case 'xhtml':
-			$gen = '<meta name="generator" content="WordPress ' . get_bloginfo( 'version' ) . '" />';
+			$gen = '<meta name="generator" content="' . Yii::$app->name . '" />';
 			break;
 		case 'atom':
-			$gen = '<generator uri="https://wordpress.org/" version="' . get_bloginfo_rss( 'version' ) . '">WordPress</generator>';
+			$gen = '<generator uri="https://wordpress.org/" version="' . get_bloginfo_rss( 'version' ) . '">' . Yii::$app->name . '</generator>';
 			break;
 		case 'rss2':
 			$gen = '<generator>https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '</generator>';
@@ -500,10 +507,10 @@ function get_the_generator( $type = '' ) {
 			$gen = '<admin:generatorAgent rdf:resource="https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '" />';
 			break;
 		case 'comment':
-			$gen = '<!-- generator="WordPress/' . get_bloginfo( 'version' ) . '" -->';
+			$gen = '<!-- generator="' . Yii::$app->name . '" -->';
 			break;
 		case 'export':
-			$gen = '<!-- generator="WordPress/' . get_bloginfo_rss('version') . '" created="'. date('Y-m-d H:i') . '" -->';
+			$gen = '<!-- generator="' . Yii::$app->name . '" created="'. date('Y-m-d H:i') . '" -->';
 			break;
 	}
 

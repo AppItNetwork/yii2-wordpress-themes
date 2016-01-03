@@ -473,22 +473,8 @@ function print_emoji_detection_script() {
 	$printed = true;
 
 	$settings = array(
-		/**
-		 * Filter the URL where emoji images are hosted.
-		 *
-		 * @since 4.2.0
-		 *
-		 * @param string The emoji base URL.
-		 */
 		'baseUrl' => apply_filters( 'emoji_url', set_url_scheme( '//s.w.org/images/core/emoji/72x72/' ) ),
 
-		/**
-		 * Filter the extension of the emoji files.
-		 *
-		 * @since 4.2.0
-		 *
-		 * @param string The emoji extension. Default .png.
-		 */
 		'ext' => apply_filters( 'emoji_ext', '.png' ),
 	);
 
@@ -570,7 +556,7 @@ function sanitize_title_with_dashes( $title, $raw_title = '', $context = 'displa
 
 	if (seems_utf8($title)) {
 		if (function_exists('mb_strtolower')) {
-			$title = mb_strtolower($title, 'UTF-8');
+			$title = mb_strtolower($title, Yii::$app->charset);
 		}
 		$title = utf8_uri_encode($title, 200);
 	}
@@ -1212,5 +1198,9 @@ function shortcode_unautop( $pee ) {
 		. '/';
 
 	return preg_replace( $pattern, '$1', $pee );
+}
+
+function esc_url_raw( $url, $protocols = null ) {
+	return esc_url( $url, $protocols, 'db' );
 }
 

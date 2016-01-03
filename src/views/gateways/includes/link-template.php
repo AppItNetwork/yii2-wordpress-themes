@@ -89,7 +89,7 @@ function get_home_url( $blog_id = null, $path = '', $scheme = null ) {
 }
 
 function includes_url( $path = '', $scheme = null ) {
-	$url = site_url( '/' . WPINC . '/', $scheme );
+	$url = site_url( Yii::$app->wpthemes->getAssetUrl() . '/', $scheme );
 
 	if ( $path && is_string( $path ) )
 		$url .= ltrim($path, '/');

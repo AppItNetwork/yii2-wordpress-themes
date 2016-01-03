@@ -31,7 +31,7 @@ function wp_load_alloptions() {
 		'siteurl' => Yii::$app->request->hostInfo,
 		'home' => Yii::$app->request->hostInfo,
 		'blogname' => Yii::$app->name,
-		'blogdescription' => 'shop description',
+		'blogdescription' => !empty(Yii::$app->params['description']) ? Yii::$app->params['description'] : Yii::t('app', 'Blog Description'),
 		'users_can_register' => '0',
 		'admin_email' => Yii::$app->params['admin_email'],
 		'start_of_week' => '1',
@@ -57,7 +57,7 @@ function wp_load_alloptions() {
 		'moderation_notify' => '1',
 		'permalink_structure' => '/%year%/%monthnum%/%day%/%postname%/',
 		'hack_file' => '0',
-		'blog_charset' => 'UTF-8',
+		'blog_charset' => Yii::$app->charset,
 		'moderation_keys' => '',
 		'active_plugins' => '',
 		'category_base' => '',
@@ -229,3 +229,33 @@ function get_network_option( $network_id, $option, $default = false ) {
 	return apply_filters( 'site_option_' . $option, $value, $option );
 }
 
+function get_transient( $transient ) {
+
+	$pre = apply_filters( 'pre_transient_' . $transient, false, $transient );
+	if ( false !== $pre )
+		return $pre;
+
+	if ( wp_using_ext_object_cache() ) {
+		$value = wp_cache_get( $transient, 'transient' );
+	} else {
+		$transient_option = '_transient_' . $transient;
+		if ( ! wp_installing() ) {
+			// If option is not in alloptions, it is not autoloaded and thus has a timeout
+			$alloptions = wp_load_alloptions();
+			if ( !isset( $alloptions[$transient_option] ) ) {
+				$transient_timeout = '_transient_timeout_' . $transient;
+				$timeout = get_option( $transient_timeout );
+				if ( false !== $timeout && $timeout < time() ) {
+					delete_option( $transient_option  );
+					delete_option( $transient_timeout );
+					$value = false;
+				}
+			}
+		}
+
+		if ( ! isset( $value ) )
+			$value = get_option( $transient_option );
+	}
+
+	return apply_filters( 'transient_' . $transient, $value, $transient );
+}

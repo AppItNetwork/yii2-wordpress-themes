@@ -32,13 +32,6 @@ function print_head_scripts() {
 	$wp_scripts->do_concat = $concatenate_scripts;
 	$wp_scripts->do_head_items();
 
-	/**
-	 * Filter whether to print the head scripts.
-	 *
-	 * @since 2.8.0
-	 *
-	 * @param bool $print Whether to print the head scripts. Default true.
-	 */
 	if ( apply_filters( 'print_head_scripts', true ) ) {
 		_print_scripts();
 	}
@@ -178,28 +171,12 @@ function wp_default_scripts( &$scripts ) {
 
 	$scripts->add( 'heartbeat', $wpAssetUrl . "/js/heartbeat$suffix.js", array('jquery'), false, 1 );
 	did_action( 'init' ) && $scripts->localize( 'heartbeat', 'heartbeatSettings',
-		/**
-		 * Filter the Heartbeat settings.
-		 *
-		 * @since 3.6.0
-		 *
-		 * @param array $settings Heartbeat settings array.
-		 */
 		apply_filters( 'heartbeat_settings', array() )
 	);
 
 	$scripts->add( 'wp-auth-check', $wpAssetUrl . "/js/wp-auth-check$suffix.js", array('heartbeat'), false, 1 );
 	did_action( 'init' ) && $scripts->localize( 'wp-auth-check', 'authcheckL10n', array(
 		'beforeunload' => __('Your session has expired. You can log in again from this page or go to the login page.'),
-
-		/**
-		 * Filter the authentication check interval.
-		 *
-		 * @since 3.6.0
-		 *
-		 * @param int $interval The interval in which to check a user's authentication.
-		 *                      Default 3 minutes in seconds, or 180.
-		 */
 		'interval' => apply_filters( 'wp_auth_check_interval', 3 * MINUTE_IN_SECONDS ),
 	) );
 
@@ -391,13 +368,6 @@ function wp_default_scripts( &$scripts ) {
 		'pluginPath' => includes_url( 'js/mediaelement/', 'relative' ),
 	);
 	did_action( 'init' ) && $scripts->localize( 'mediaelement', '_wpmejsSettings',
-		/**
-		 * Filter the MediaElement configuration settings.
-		 *
-		 * @since 4.4.0
-		 *
-		 * @param array $mejs_settings MediaElement settings array.
-		 */
 		apply_filters( 'mejs_settings', $mejs_settings )
 	);
 

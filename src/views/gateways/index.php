@@ -52,6 +52,7 @@ $GLOBALS['wp_version'] = 4.4;
 	require_once( 'includes/meta.php' );
 	require_once( 'includes/media.php' );
 	require_once( 'includes/shortcodes.php' );
+	require_once( 'includes/author-template.php' );
 	require_once( 'includes/comment-template.php' );
 	require_once( 'includes/comment.php' );
 	require_once( 'includes/class-wp-error.php' );
@@ -60,14 +61,20 @@ $GLOBALS['wp_version'] = 4.4;
 
 	ob_start();
     ob_implicit_flush(false);
-		include( Yii::getAlias( '@app/views/' . $this->context->id . '/' . $this->context->action->id . '.php' ) );
+		$path = Yii::getAlias( '@app/views/' . $this->context->id . '/' . $this->context->action->id . '.php' );
+		if (!is_file($path)) {
+			$path = Yii::getAlias( '@app/views/' . $this->context->id . '/error.php' );
+			$this->context->action->id = 'error';
+		}
+		include( $path );
 	$this->content = ob_get_clean();
 
-	Yii::$app->wpthemes->getPages();
-	if ( $this->context->action->id !== 'error' ) {
-		include_once( TEMPLATEPATH . DS . 'page.php' );
+	// pr($this->context->action->id);die;
+	// $this->wp_query->getPages();
+	if ( $this->context->action->id != 'error' ) {
+		include( TEMPLATEPATH . DS . 'page.php' );
 	} else {
-		include_once( TEMPLATEPATH . DS . '404.php' );
+		include( TEMPLATEPATH . DS . '404.php' );
 	}
 
 	// global $wp_filter;

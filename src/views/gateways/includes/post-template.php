@@ -10,14 +10,13 @@ function body_class( $class = '' ) {
  *
  * @since 2.8.0
  *
- * @global WP_Query $wp_query
+ * @global WP_Query Yii::$app->view->wp_query
  *
  * @param string|array $class One or more classes to add to the class list.
  * @return array Array of classes.
  */
 function get_body_class( $class = '' ) {
-	global $wp_query;
-
+	
 	$classes = array();
 
 	if ( function_exists('is_rtl') && is_rtl() )
@@ -33,7 +32,7 @@ function get_body_class( $class = '' ) {
 	// 	$classes[] = 'date';
 	// if ( is_search() ) {
 	// 	$classes[] = 'search';
-	// 	$classes[] = $wp_query->posts ? 'search-results' : 'search-no-results';
+	// 	$classes[] = Yii::$app->view->wp_query->posts ? 'search-results' : 'search-no-results';
 	// }
 	// if ( is_paged() )
 	// 	$classes[] = 'paged';
@@ -43,8 +42,8 @@ function get_body_class( $class = '' ) {
 	// 	$classes[] = 'error404';
 
 	// if ( is_single() ) {
-	// 	$post_id = $wp_query->get_queried_object_id();
-	// 	$post = $wp_query->get_queried_object();
+	// 	$post_id = Yii::$app->view->wp_query->get_queried_object_id();
+	// 	$post = Yii::$app->view->wp_query->get_queried_object();
 
 	// 	$classes[] = 'single';
 	// 	if ( isset( $post->post_type ) ) {
@@ -76,14 +75,14 @@ function get_body_class( $class = '' ) {
 	// 			$post_type = reset( $post_type );
 	// 		$classes[] = 'post-type-archive-' . sanitize_html_class( $post_type );
 	// 	} elseif ( is_author() ) {
-	// 		$author = $wp_query->get_queried_object();
+	// 		$author = Yii::$app->view->wp_query->get_queried_object();
 	// 		$classes[] = 'author';
 	// 		if ( isset( $author->user_nicename ) ) {
 	// 			$classes[] = 'author-' . sanitize_html_class( $author->user_nicename, $author->ID );
 	// 			$classes[] = 'author-' . $author->ID;
 	// 		}
 	// 	} elseif ( is_category() ) {
-	// 		$cat = $wp_query->get_queried_object();
+	// 		$cat = Yii::$app->view->wp_query->get_queried_object();
 	// 		$classes[] = 'category';
 	// 		if ( isset( $cat->term_id ) ) {
 	// 			$cat_class = sanitize_html_class( $cat->slug, $cat->term_id );
@@ -95,7 +94,7 @@ function get_body_class( $class = '' ) {
 	// 			$classes[] = 'category-' . $cat->term_id;
 	// 		}
 	// 	} elseif ( is_tag() ) {
-	// 		$tag = $wp_query->get_queried_object();
+	// 		$tag = Yii::$app->view->wp_query->get_queried_object();
 	// 		$classes[] = 'tag';
 	// 		if ( isset( $tag->term_id ) ) {
 	// 			$tag_class = sanitize_html_class( $tag->slug, $tag->term_id );
@@ -107,7 +106,7 @@ function get_body_class( $class = '' ) {
 	// 			$classes[] = 'tag-' . $tag->term_id;
 	// 		}
 	// 	} elseif ( is_tax() ) {
-	// 		$term = $wp_query->get_queried_object();
+	// 		$term = Yii::$app->view->wp_query->get_queried_object();
 	// 		if ( isset( $term->term_id ) ) {
 	// 			$term_class = sanitize_html_class( $term->slug, $term->term_id );
 	// 			if ( is_numeric( $term_class ) || ! trim( $term_class, '-' ) ) {
@@ -122,7 +121,7 @@ function get_body_class( $class = '' ) {
 	// } elseif ( is_page() ) {
 	// 	$classes[] = 'page';
 
-	// 	$page_id = $wp_query->get_queried_object_id();
+	// 	$page_id = Yii::$app->view->wp_query->get_queried_object_id();
 
 	// 	$post = get_post($page_id);
 
@@ -162,11 +161,11 @@ function get_body_class( $class = '' ) {
 	// if ( get_background_color() !== get_theme_support( 'custom-background', 'default-color' ) || get_background_image() )
 	// 	$classes[] = 'custom-background';
 
-	// $page = $wp_query->get( 'page' );
-	$page = Yii::$app->wpthemes->getAllPages();
+	$page = Yii::$app->view->wp_query->get( 'page' );
+	// $page = Yii::$app->wpthemes->getAllPages();
 
 	if ( ! $page || $page < 2 )
-		$page = $wp_query->get( 'paged' );
+		$page = Yii::$app->view->wp_query->get( 'paged' );
 
 	// if ( $page && $page > 1 && ! is_404() ) {
 	// 	$classes[] = 'paged-' . $page;
@@ -200,7 +199,7 @@ function get_body_class( $class = '' ) {
 
 	$classes = array_map( 'esc_attr', $classes );
 
-	// $classes = apply_filters( 'body_class', $classes, $class );
+	$classes = apply_filters( 'body_class', $classes, $class );
 
 	return array_unique( $classes );
 }

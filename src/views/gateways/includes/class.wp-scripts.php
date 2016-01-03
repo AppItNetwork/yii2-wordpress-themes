@@ -39,13 +39,6 @@ class WP_Scripts extends WP_Dependencies {
 	 * @access public
 	 */
 	public function init() {
-		/**
-		 * Fires when the WP_Scripts instance is initialized.
-		 *
-		 * @since 2.6.0
-		 *
-		 * @param WP_Scripts &$this WP_Scripts instance, passed by reference.
-		 */
 		do_action_ref_array( 'wp_default_scripts', array(&$this) );
 	}
 
@@ -136,14 +129,6 @@ class WP_Scripts extends WP_Dependencies {
 		}
 
 		if ( $this->do_concat ) {
-			/**
-			 * Filter the script loader source.
-			 *
-			 * @since 2.2.0
-			 *
-			 * @param string $src    Script loader source path.
-			 * @param string $handle Script handle.
-			 */
 			$srce = apply_filters( 'script_loader_src', $src, $handle );
 			if ( $this->in_default_dir( $srce ) && ! $conditional ) {
 				$this->print_code .= $this->print_extra_script( $handle, false );
@@ -183,15 +168,6 @@ class WP_Scripts extends WP_Dependencies {
 
 		$tag = "{$cond_before}<script type='text/javascript' src='$src'></script>\n{$cond_after}";
 
-		/**
-		 * Filter the HTML script tag of an enqueued script.
-		 *
-		 * @since 4.1.0
-		 *
-		 * @param string $tag    The `<script>` tag for the enqueued script.
-		 * @param string $handle The script's registered handle.
-		 * @param string $src    The script's source URL.
-		 */
 		$tag = apply_filters( 'script_loader_tag', $tag, $handle, $src );
 
 		if ( $this->do_concat ) {
@@ -224,7 +200,7 @@ class WP_Scripts extends WP_Dependencies {
 			if ( !is_scalar($value) )
 				continue;
 
-			$l10n[$key] = html_entity_decode( (string) $value, ENT_QUOTES, 'UTF-8');
+			$l10n[$key] = html_entity_decode( (string) $value, ENT_QUOTES, Yii::$app->charset);
 		}
 
 		$script = "var $object_name = " . wp_json_encode( $l10n ) . ';';
@@ -267,13 +243,6 @@ class WP_Scripts extends WP_Dependencies {
 	public function all_deps( $handles, $recursion = false, $group = false ) {
 		$r = parent::all_deps( $handles, $recursion );
 		if ( ! $recursion ) {
-			/**
-			 * Filter the list of script dependencies left to print.
-			 *
-			 * @since 2.3.0
-			 *
-			 * @param array $to_do An array of script dependencies.
-			 */
 			$this->to_do = apply_filters( 'print_scripts_array', $this->to_do );
 		}
 		return $r;
