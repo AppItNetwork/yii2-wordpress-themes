@@ -1347,7 +1347,7 @@ function is_blog_installed() {
 	 * Check cache first. If options table goes away and we have true
 	 * cached, oh well.
 	 */
-	// if ( wp_cache_get( 'is_blog_installed' ) )
+	if ( wp_cache_get( 'is_blog_installed' ) )
 		return true;
 
 	$suppress = $wpdb->suppress_errors();

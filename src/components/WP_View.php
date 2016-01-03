@@ -9,60 +9,11 @@ use yii\helpers\ArrayHelper;
 use yii\base\InvalidCallException;
 use yii\base\InvalidParamException;
 use yii\base\InvalidConfigException;
+use yii\web\JqueryAsset;
 
 class WP_View extends \yii\web\View
 {
-    /**
-     * @event Event an event that is triggered by [[beginBody()]].
-     */
-    // const EVENT_BEGIN_BODY = 'beginBody';
-    /**
-     * @event Event an event that is triggered by [[endBody()]].
-     */
-    // const EVENT_END_BODY = 'endBody';
-    /**
-     * The location of registered JavaScript code block or files.
-     * This means the location is in the head section.
-     */
-    // const POS_HEAD = 1;
-    /**
-     * The location of registered JavaScript code block or files.
-     * This means the location is at the beginning of the body section.
-     */
-    // const POS_BEGIN = 2;
-    /**
-     * The location of registered JavaScript code block or files.
-     * This means the location is at the end of the body section.
-     */
-    // const POS_END = 3;
-    /**
-     * The location of registered JavaScript code block.
-     * This means the JavaScript code block will be enclosed within `jQuery(document).ready()`.
-     */
-    // const POS_READY = 4;
-    /**
-     * The location of registered JavaScript code block.
-     * This means the JavaScript code block will be enclosed within `jQuery(window).load()`.
-     */
-    // const POS_LOAD = 5;
-    /**
-     * This is internally used as the placeholder for receiving the content registered for the head section.
-     */
-    // const PH_HEAD = '<![CDATA[YII-BLOCK-HEAD]]>';
-    /**
-     * This is internally used as the placeholder for receiving the content registered for the beginning of the body section.
-     */
-    // const PH_BODY_BEGIN = '<![CDATA[YII-BLOCK-BODY-BEGIN]]>';
-    /**
-     * This is internally used as the placeholder for receiving the content registered for the end of the body section.
-     */
-    // const PH_BODY_END = '<![CDATA[YII-BLOCK-BODY-END]]>';
 
-    /**
-     * @var AssetBundle[] list of the registered asset bundles. The keys are the bundle names, and the values
-     * are the registered [[AssetBundle]] objects.
-     * @see registerAssetBundle()
-     */
     public $assetBundles = [];
     /**
      * @var string the page title
@@ -98,6 +49,8 @@ class WP_View extends \yii\web\View
      * @see registerJsFile()
      */
     public $jsFiles;
+
+    public $content;
 
     private $_assetManager;
 
@@ -154,21 +107,6 @@ class WP_View extends \yii\web\View
         $this->clear();
     }
 
-    /**
-     * Renders a view in response to an AJAX request.
-     *
-     * This method is similar to [[render()]] except that it will surround the view being rendered
-     * with the calls of [[beginPage()]], [[head()]], [[beginBody()]], [[endBody()]] and [[endPage()]].
-     * By doing so, the method is able to inject into the rendering result with JS/CSS scripts and files
-     * that are registered with the view.
-     *
-     * @param string $view the view name. Please refer to [[render()]] on how to specify this parameter.
-     * @param array $params the parameters (name-value pairs) that will be extracted and made available in the view file.
-     * @param object $context the context that the view should use for rendering the view. If null,
-     * existing [[context]] will be used.
-     * @return string the rendering result
-     * @see render()
-     */
     public function renderAjax($view, $params = [], $context = null)
     {
         $viewFile = $this->findViewFile($view, $context);
@@ -186,27 +124,16 @@ class WP_View extends \yii\web\View
         return ob_get_clean();
     }
 
-    /**
-     * Registers the asset manager being used by this view object.
-     * @return \yii\web\AssetManager the asset manager. Defaults to the "assetManager" application component.
-     */
     public function getAssetManager()
     {
         return $this->_assetManager ?: Yii::$app->getAssetManager();
     }
 
-    /**
-     * Sets the asset manager.
-     * @param \yii\web\AssetManager $value the asset manager
-     */
     public function setAssetManager($value)
     {
         $this->_assetManager = $value;
     }
 
-    /**
-     * Clears up the registered meta tags, link tags, css/js scripts and files.
-     */
     public function clear()
     {
         $this->metaTags = null;
@@ -218,11 +145,6 @@ class WP_View extends \yii\web\View
         $this->assetBundles = [];
     }
 
-    /**
-     * Registers all files provided by an asset bundle including depending bundles files.
-     * Removes a bundle from [[assetBundles]] once files are registered.
-     * @param string $name name of the bundle to register
-     */
     protected function registerAssetFiles($name)
     {
         if (!isset($this->assetBundles[$name])) {
@@ -238,17 +160,6 @@ class WP_View extends \yii\web\View
         unset($this->assetBundles[$name]);
     }
 
-    /**
-     * Registers the named asset bundle.
-     * All dependent asset bundles will be registered.
-     * @param string $name the class name of the asset bundle (without the leading backslash)
-     * @param integer|null $position if set, this forces a minimum position for javascript files.
-     * This will adjust depending assets javascript file position or fail if requirement can not be met.
-     * If this is null, asset bundles position settings will not be changed.
-     * See [[registerJsFile]] for more details on javascript position.
-     * @return AssetBundle the registered asset bundle instance
-     * @throws InvalidConfigException if the asset bundle does not exist or a circular dependency is detected
-     */
     public function registerAssetBundle($name, $position = null)
     {
         if (!isset($this->assetBundles[$name])) {
@@ -283,25 +194,6 @@ class WP_View extends \yii\web\View
         return $bundle;
     }
 
-    /**
-     * Registers a meta tag.
-     *
-     * For example, a description meta tag can be added like the following:
-     *
-     * ```php
-     * $view->registerMetaTag([
-     *     'name' => 'description',
-     *     'content' => 'This website is about funny raccoons.'
-     * ]);
-     * ```
-     *
-     * will result in the meta tag `<meta name="description" content="This website is about funny raccoons.">`.
-     *
-     * @param array $options the HTML attributes for the meta tag.
-     * @param string $key the key that identifies the meta tag. If two meta tags are registered
-     * with the same key, the latter will overwrite the former. If this is null, the new meta tag
-     * will be appended to the existing ones.
-     */
     public function registerMetaTag($options, $key = null)
     {
         if ($key === null) {
@@ -311,26 +203,6 @@ class WP_View extends \yii\web\View
         }
     }
 
-    /**
-     * Registers a link tag.
-     *
-     * For example, a link tag for a custom [favicon](http://www.w3.org/2005/10/howto-favicon)
-     * can be added like the following:
-     *
-     * ```php
-     * $view->registerLinkTag(['rel' => 'icon', 'type' => 'image/png', 'href' => '/myicon.png']);
-     * ```
-     *
-     * which will result in the following HTML: `<link rel="icon" type="image/png" href="/myicon.png">`.
-     *
-     * **Note:** To register link tags for CSS stylesheets, use [[registerCssFile()]] instead, which
-     * has more options for this kind of link tag.
-     *
-     * @param array $options the HTML attributes for the link tag.
-     * @param string $key the key that identifies the link tag. If two link tags are registered
-     * with the same key, the latter will overwrite the former. If this is null, the new link tag
-     * will be appended to the existing ones.
-     */
     public function registerLinkTag($options, $key = null)
     {
         if ($key === null) {
@@ -340,32 +212,12 @@ class WP_View extends \yii\web\View
         }
     }
 
-    /**
-     * Registers a CSS code block.
-     * @param string $css the content of the CSS code block to be registered
-     * @param array $options the HTML attributes for the `<style>`-tag.
-     * @param string $key the key that identifies the CSS code block. If null, it will use
-     * $css as the key. If two CSS code blocks are registered with the same key, the latter
-     * will overwrite the former.
-     */
     public function registerCss($css, $options = [], $key = null)
     {
         $key = $key ?: md5($css);
         $this->css[$key] = Html::style($css, $options);
     }
 
-    /**
-     * Registers a CSS file.
-     * @param string $url the CSS file to be registered.
-     * @param array $options the HTML attributes for the link tag. Please refer to [[Html::cssFile()]] for
-     * the supported options. The following options are specially handled and are not treated as HTML attributes:
-     *
-     * - `depends`: array, specifies the names of the asset bundles that this CSS file depends on.
-     *
-     * @param string $key the key that identifies the CSS script file. If null, it will use
-     * $url as the key. If two CSS files are registered with the same key, the latter
-     * will overwrite the former.
-     */
     public function registerCssFile($url, $options = [], $key = null)
     {
         $url = Yii::getAlias($url);
@@ -385,24 +237,6 @@ class WP_View extends \yii\web\View
         }
     }
 
-    /**
-     * Registers a JS code block.
-     * @param string $js the JS code block to be registered
-     * @param integer $position the position at which the JS script tag should be inserted
-     * in a page. The possible values are:
-     *
-     * - [[POS_HEAD]]: in the head section
-     * - [[POS_BEGIN]]: at the beginning of the body section
-     * - [[POS_END]]: at the end of the body section
-     * - [[POS_LOAD]]: enclosed within jQuery(window).load().
-     *   Note that by using this position, the method will automatically register the jQuery js file.
-     * - [[POS_READY]]: enclosed within jQuery(document).ready(). This is the default value.
-     *   Note that by using this position, the method will automatically register the jQuery js file.
-     *
-     * @param string $key the key that identifies the JS code block. If null, it will use
-     * $js as the key. If two JS code blocks are registered with the same key, the latter
-     * will overwrite the former.
-     */
     public function registerJs($js, $position = parent::POS_READY, $key = null)
     {
         $key = $key ?: md5($js);
@@ -412,24 +246,6 @@ class WP_View extends \yii\web\View
         }
     }
 
-    /**
-     * Registers a JS file.
-     * @param string $url the JS file to be registered.
-     * @param array $options the HTML attributes for the script tag. The following options are specially handled
-     * and are not treated as HTML attributes:
-     *
-     * - `depends`: array, specifies the names of the asset bundles that this JS file depends on.
-     * - `position`: specifies where the JS script tag should be inserted in a page. The possible values are:
-     *     * [[POS_HEAD]]: in the head section
-     *     * [[POS_BEGIN]]: at the beginning of the body section
-     *     * [[POS_END]]: at the end of the body section. This is the default value.
-     *
-     * Please refer to [[Html::jsFile()]] for other supported options.
-     *
-     * @param string $key the key that identifies the JS script file. If null, it will use
-     * $url as the key. If two JS files are registered with the same key, the latter
-     * will overwrite the former.
-     */
     public function registerJsFile($url, $options = [], $key = null)
     {
         $url = Yii::getAlias($url);
@@ -450,11 +266,6 @@ class WP_View extends \yii\web\View
         }
     }
 
-    /**
-     * Renders the content to be inserted in the head section.
-     * The content is rendered using the registered meta tags, link tags, CSS/JS code blocks and files.
-     * @return string the rendered content
-     */
     protected function renderHeadHtml()
     {
         $lines = [];
@@ -481,11 +292,6 @@ class WP_View extends \yii\web\View
         return empty($lines) ? '' : implode("\n", $lines);
     }
 
-    /**
-     * Renders the content to be inserted at the beginning of the body section.
-     * The content is rendered using the registered JS code blocks and files.
-     * @return string the rendered content
-     */
     protected function renderBodyBeginHtml()
     {
         $lines = [];
@@ -499,14 +305,6 @@ class WP_View extends \yii\web\View
         return empty($lines) ? '' : implode("\n", $lines);
     }
 
-    /**
-     * Renders the content to be inserted at the end of the body section.
-     * The content is rendered using the registered JS code blocks and files.
-     * @param boolean $ajaxMode whether the view is rendering in AJAX mode.
-     * If true, the JS scripts registered at [[POS_READY]] and [[POS_LOAD]] positions
-     * will be rendered at the end of the view like normal scripts.
-     * @return string the rendered content
-     */
     protected function renderBodyEndHtml($ajaxMode)
     {
         $lines = [];
@@ -558,16 +356,26 @@ class WP_View extends \yii\web\View
 
     protected function findViewFile($view, $context = null)
     {
-            // pr('findViewFile');pr($view);//die;
-        // if ( $view != 'main' ) {
-            // pr($this->theme->basePath);pr($view);die;
-            $path = Yii::$app->wpthemes->getWordpressLocation() . DIRECTORY_SEPARATOR . 'index.php';
+        // pr('findViewFile');pr($view);pr(Yii::$app->wpthemes->getThemeBasePath());die;
+        // pr($this->theme->basePath);pr($view);die;
+
+        // if ( $view != 'index' ) {
+
+        // } else {
+            
+            // $path = Yii::$app->wpthemes->getWordpressLocation() . DIRECTORY_SEPARATOR . 'index.php';
+
+            $path = '@appitnetwork/wpthemes/views/gateways/index.php';
+            // $path = Yii::$app->wpthemes->getThemeBasePath() . DIRECTORY_SEPARATOR . 'index.php';
+
             // $path = $file . '.' . $this->defaultExtension;
             // if ($this->defaultExtension !== 'php' && !is_file($path)) {
             //     $path = $file . '.php';
             // }
             // pr($path);die;
-            return $path;
+        // }
+
+        return $path;
         // } else {
         //     return $this->_defaultFindViewFile( $view, $context );
         // }

@@ -110,7 +110,7 @@ class WP_Roles {
 	 */
 	protected function _init() {
 		global $wpdb, $wp_user_roles;
-		$this->role_key = $wpdb->tablePrefix . 'user_roles';
+		$this->role_key = $wpdb->get_blog_prefix() . 'user_roles';
 		if ( ! empty( $wp_user_roles ) ) {
 			$this->roles = $wp_user_roles;
 			$this->use_db = false;

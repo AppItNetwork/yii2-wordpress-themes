@@ -116,9 +116,6 @@ class WP_User {
 	 * @param int $blog_id Optional Blog ID, defaults to current blog.
 	 */
 	public function __construct( $id = 0, $name = '', $blog_id = '' ) {
-		$this->data = new stdClass;
-		return;
-		
 		if ( ! isset( self::$back_compat_keys ) ) {
 			$prefix = $GLOBALS['wpdb']->prefix;
 			self::$back_compat_keys = array(

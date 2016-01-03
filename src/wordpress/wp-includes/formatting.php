@@ -4791,4 +4791,4 @@ function url_shorten( $url, $length = 35 ) {
 		$short_url = substr( $short_url, 0, $length - 3 ) . '&hellip;';
 	}
 	return $short_url;
-}
+} 

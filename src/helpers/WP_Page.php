@@ -13,6 +13,7 @@ class WP_Page extends WP_Post
 {
 
 	public function initEmptyObject( $post = null ) {
+		// pr(Yii::$app->view->content);die;
 		if (is_array($post)) {
 			foreach ( $post as $key => $value ) {
 				if (isset($this->$key)) {
@@ -22,8 +23,9 @@ class WP_Page extends WP_Post
 		} else {
 			$this->post_type = 'page';
 			$this->post_status = 'publish';
-			$this->post_title = ucwords($post);
+			$this->post_title = ( !empty(Yii::$app->view->title) ) ? Yii::$app->view->title : ucwords($post);
 			$this->guid = Url::to(['site/'.strtolower($post)], true);
+			// $this->post_content = Yii::$app->view->content;
 		}
 	}
 
