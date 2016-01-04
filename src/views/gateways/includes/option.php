@@ -33,7 +33,7 @@ function wp_load_alloptions() {
 		'blogname' => Yii::$app->name,
 		'blogdescription' => !empty(Yii::$app->params['description']) ? Yii::$app->params['description'] : Yii::t('app', 'Blog Description'),
 		'users_can_register' => '0',
-		'admin_email' => Yii::$app->params['admin_email'],
+		'admin_email' => isset(Yii::$app->params['admin_email']) ? Yii::$app->params['admin_email'] : 'admin@example.com',
 		'start_of_week' => '1',
 		'use_balanceTags' => '0',
 		'use_smilies' => '1',

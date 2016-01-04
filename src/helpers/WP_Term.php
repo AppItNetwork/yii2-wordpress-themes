@@ -32,6 +32,8 @@ class WP_Term extends Component
 	public $filter = 'raw';
 
 	public static function get_instance( $term_id, $taxonomy = null ) {
+		return false;
+		
 		global $wpdb;
 
 		$term_id = (int) $term_id;

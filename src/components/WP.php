@@ -24,7 +24,7 @@ class WP extends Component
 	{	
 		$path = '@appitnetwork/wpthemes/wordpress';
 		$this->setWordpressLocation($path);
-		$this->_setView();
+		$config = $this->_setView($config);
 		$this->_registerAsset();
 
         parent::__construct($config);
@@ -35,18 +35,18 @@ class WP extends Component
         parent::init();
     }
 
-	private function _setView()
+	private function _setView($config)
 	{
-		// $selectedTheme = ArrayHelper::getValue( $config, 'selectedTheme', 'twentythirteen' );
-		// $selectedTheme = ArrayHelper::getValue( $config, 'selectedTheme', 'twentyfourteen' );
-		// $selectedTheme = ArrayHelper::getValue( $config, 'selectedTheme', 'twentyfifteen' );
-		$selectedTheme = ArrayHelper::getValue( $config, 'selectedTheme', 'twentysixteen' );
+		// $selectedTheme = ArrayHelper::remove( $config, 'selectedTheme', 'twentythirteen' );
+		// $selectedTheme = ArrayHelper::remove( $config, 'selectedTheme', 'twentyfourteen' );
+		// $selectedTheme = ArrayHelper::remove( $config, 'selectedTheme', 'twentyfifteen' );
+		$selectedTheme = ArrayHelper::remove( $config, 'selectedTheme', 'twentysixteen' );
 
-		$themesBaseUrl = ArrayHelper::getValue( $config, 'themesBaseUrl', '@web/../vendor/appitnetwork/yii2-wordpress-themes/src/wordpress/wp-content/themes' );
-		$wpThemesBaseUrl = ArrayHelper::getValue( $config, 'wpThemesBaseUrl', $themesBaseUrl );
+		$themesBaseUrl = ArrayHelper::remove( $config, 'themesBaseUrl', '@web/../vendor/appitnetwork/yii2-wordpress-themes/src/wordpress/wp-content/themes' );
+		$wpThemesBaseUrl = ArrayHelper::remove( $config, 'wpThemesBaseUrl', $themesBaseUrl );
 
-		$themesBasePath = ArrayHelper::getValue( $config, 'themesBasePath', '@appitnetwork/wpthemes/wordpress/wp-content/themes' );
-		$wpThemesBasePath = ArrayHelper::getValue( $config, 'wpThemesBasePath', $themesBasePath );
+		$themesBasePath = ArrayHelper::remove( $config, 'themesBasePath', '@appitnetwork/wpthemes/wordpress/wp-content/themes' );
+		$wpThemesBasePath = ArrayHelper::remove( $config, 'wpThemesBasePath', $themesBasePath );
 
 		$originalTheme = Yii::$app->view->theme;
 		Yii::$app->set('view', Yii::createObject([
@@ -71,6 +71,7 @@ class WP extends Component
 		$wpThemesLayout = '@appitnetwork/wpthemes/views/layouts/main';
 		Yii::$app->layout = $wpThemesLayout;
 		// pr(Yii::$app->layout);die;
+		return $config;
 	}
 
 	private function _registerAsset()
@@ -275,4 +276,10 @@ class WP extends Component
 	// 	}
 	// }
 
+}
+
+function pr( $data = null ) {
+	echo '<pre>';
+	print_r($data);
+	echo '</pre>';
 }

@@ -15,6 +15,12 @@ define( 'WP_SITEURL', Yii::$app->request->hostInfo );
 define( 'WP_CONTENT_URL', WP_SITEURL . Yii::$app->wpthemes->baseThemeAssetUrl );
 define( 'WP_DEBUG', false );
 
+define( 'AUTOSAVE_INTERVAL', 60 );
+define( 'OBJECT', 'OBJECT' );
+define( 'object', 'OBJECT' ); // Back compat.
+
+
+
 $GLOBALS['wp_version'] = 4.4;
 
 	require_once( 'includes/functions.php' );
