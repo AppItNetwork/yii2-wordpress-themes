@@ -23,3 +23,10 @@ function get_user_option( $option, $user = 0, $deprecated = '' ) {
 	return apply_filters( "get_user_option_{$option}", $result, $option, $user );
 }
 
+function get_current_user_id() {
+	if ( ! function_exists( 'wp_get_current_user' ) )
+		return 0;
+	$user = wp_get_current_user();
+	return ( isset( $user->ID ) ? (int) $user->ID : 0 );
+}
+

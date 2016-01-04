@@ -89,7 +89,7 @@ function apply_filters( $tag, $value ) {
 		foreach ( (array) current($wp_filter[$tag]) as $the_ )
 			if ( !is_null($the_['function']) ){
 				$args[1] = $value;
-				$value = call_user_func_array($the_['function'], array_slice($args, 1, (int) $the_['accepted_args']));
+				// $value = call_user_func_array($the_['function'], array_slice($args, 1, (int) $the_['accepted_args']));
 			}
 
 	} while ( next($wp_filter[$tag]) !== false );
@@ -208,5 +208,24 @@ function current_filter() {
 
 function current_action() {
 	return current_filter();
+}
+
+function remove_filter( $tag, $function_to_remove, $priority = 10 ) {
+	$function_to_remove = _wp_filter_build_unique_id( $tag, $function_to_remove, $priority );
+
+	$r = isset( $GLOBALS['wp_filter'][ $tag ][ $priority ][ $function_to_remove ] );
+
+	if ( true === $r ) {
+		unset( $GLOBALS['wp_filter'][ $tag ][ $priority ][ $function_to_remove ] );
+		if ( empty( $GLOBALS['wp_filter'][ $tag ][ $priority ] ) ) {
+			unset( $GLOBALS['wp_filter'][ $tag ][ $priority ] );
+		}
+		if ( empty( $GLOBALS['wp_filter'][ $tag ] ) ) {
+			$GLOBALS['wp_filter'][ $tag ] = array();
+		}
+		unset( $GLOBALS['merged_filters'][ $tag ] );
+	}
+
+	return $r;
 }
 

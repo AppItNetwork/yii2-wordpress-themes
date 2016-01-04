@@ -29,3 +29,25 @@ function _close_comments_for_old_post( $open, $post_id ) {
 	return $open;
 }
 
+function sanitize_comment_cookies() {
+	if ( isset( $_COOKIE['comment_author_' . COOKIEHASH] ) ) {
+		$comment_author = apply_filters( 'pre_comment_author_name', $_COOKIE['comment_author_' . COOKIEHASH] );
+		$comment_author = wp_unslash($comment_author);
+		$comment_author = esc_attr($comment_author);
+		$_COOKIE['comment_author_' . COOKIEHASH] = $comment_author;
+	}
+
+	if ( isset( $_COOKIE['comment_author_email_' . COOKIEHASH] ) ) {
+		$comment_author_email = apply_filters( 'pre_comment_author_email', $_COOKIE['comment_author_email_' . COOKIEHASH] );
+		$comment_author_email = wp_unslash($comment_author_email);
+		$comment_author_email = esc_attr($comment_author_email);
+		$_COOKIE['comment_author_email_'.COOKIEHASH] = $comment_author_email;
+	}
+
+	if ( isset( $_COOKIE['comment_author_url_' . COOKIEHASH] ) ) {
+		$comment_author_url = apply_filters( 'pre_comment_author_url', $_COOKIE['comment_author_url_' . COOKIEHASH] );
+		$comment_author_url = wp_unslash($comment_author_url);
+		$_COOKIE['comment_author_url_'.COOKIEHASH] = $comment_author_url;
+	}
+}
+

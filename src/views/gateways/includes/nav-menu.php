@@ -50,3 +50,15 @@ function get_registered_nav_menus() {
 	return array();
 }
 
+function register_nav_menu( $location, $description ) {
+	register_nav_menus( array( $location => $description ) );
+}
+
+function register_nav_menus( $locations = array() ) {
+	global $_wp_registered_nav_menus;
+
+	add_theme_support( 'menus' );
+
+	$_wp_registered_nav_menus = array_merge( (array) $_wp_registered_nav_menus, $locations );
+}
+

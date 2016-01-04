@@ -1204,3 +1204,11 @@ function esc_url_raw( $url, $protocols = null ) {
 	return esc_url( $url, $protocols, 'db' );
 }
 
+function sanitize_key( $key ) {
+	$raw_key = $key;
+	$key = strtolower( $key );
+	$key = preg_replace( '/[^a-z0-9_\-]/', '', $key );
+
+	return apply_filters( 'sanitize_key', $key, $raw_key );
+}
+

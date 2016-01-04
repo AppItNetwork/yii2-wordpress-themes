@@ -84,6 +84,7 @@ add_action( 'admin_print_styles-appearance_page_custom-header', 'twentythirteen_
  * @since Twenty Thirteen 1.0
  */
 function twentythirteen_header_style() {
+	// die('twentythirteen_header_style');
 	$header_image = get_header_image();
 	$text_color   = get_header_textcolor();
 

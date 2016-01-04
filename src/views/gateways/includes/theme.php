@@ -43,6 +43,7 @@ function get_raw_theme_root( $stylesheet_or_template, $skip_cache = false ) {
 }
 
 function get_header_image() {
+	// die('get_header_image');
 	// return false;
 	$url = get_theme_mod( 'header_image', get_theme_support( 'custom-header', 'default-image' ) );
 
@@ -289,5 +290,300 @@ function _get_random_header_data() {
 		$_wp_random_header->thumbnail_url =  sprintf( $_wp_random_header->thumbnail_url, get_template_directory_uri(), get_stylesheet_directory_uri() );
 	}
 	return $_wp_random_header;
+}
+
+function add_theme_support( $feature ) {
+	global $_wp_theme_features;
+
+	if ( func_num_args() == 1 )
+		$args = true;
+	else
+		$args = array_slice( func_get_args(), 1 );
+
+	switch ( $feature ) {
+		case 'post-formats' :
+			if ( is_array( $args[0] ) ) {
+				$post_formats = get_post_format_slugs();
+				unset( $post_formats['standard'] );
+
+				$args[0] = array_intersect( $args[0], array_keys( $post_formats ) );
+			}
+			break;
+
+		case 'html5' :
+			// You can't just pass 'html5', you need to pass an array of types.
+			if ( empty( $args[0] ) ) {
+				// Build an array of types for back-compat.
+				$args = array( 0 => array( 'comment-list', 'comment-form', 'search-form' ) );
+			} elseif ( ! is_array( $args[0] ) ) {
+				_doing_it_wrong( "add_theme_support( 'html5' )", __( 'You need to pass an array of types.' ), '3.6.1' );
+				return false;
+			}
+
+			// Calling 'html5' again merges, rather than overwrites.
+			if ( isset( $_wp_theme_features['html5'] ) )
+				$args[0] = array_merge( $_wp_theme_features['html5'][0], $args[0] );
+			break;
+
+		case 'custom-header-uploads' :
+			return add_theme_support( 'custom-header', array( 'uploads' => true ) );
+
+		case 'custom-header' :
+			if ( ! is_array( $args ) )
+				$args = array( 0 => array() );
+
+			$defaults = array(
+				'default-image' => '',
+				'random-default' => false,
+				'width' => 0,
+				'height' => 0,
+				'flex-height' => false,
+				'flex-width' => false,
+				'default-text-color' => '',
+				'header-text' => true,
+				'uploads' => true,
+				'wp-head-callback' => '',
+				'admin-head-callback' => '',
+				'admin-preview-callback' => '',
+			);
+
+			$jit = isset( $args[0]['__jit'] );
+			unset( $args[0]['__jit'] );
+
+			// Merge in data from previous add_theme_support() calls.
+			// The first value registered wins. (A child theme is set up first.)
+			if ( isset( $_wp_theme_features['custom-header'] ) )
+				$args[0] = wp_parse_args( $_wp_theme_features['custom-header'][0], $args[0] );
+
+			// Load in the defaults at the end, as we need to insure first one wins.
+			// This will cause all constants to be defined, as each arg will then be set to the default.
+			if ( $jit )
+				$args[0] = wp_parse_args( $args[0], $defaults );
+
+			// If a constant was defined, use that value. Otherwise, define the constant to ensure
+			// the constant is always accurate (and is not defined later,  overriding our value).
+			// As stated above, the first value wins.
+			// Once we get to wp_loaded (just-in-time), define any constants we haven't already.
+			// Constants are lame. Don't reference them. This is just for backwards compatibility.
+
+			if ( defined( 'NO_HEADER_TEXT' ) )
+				$args[0]['header-text'] = ! NO_HEADER_TEXT;
+			elseif ( isset( $args[0]['header-text'] ) )
+				define( 'NO_HEADER_TEXT', empty( $args[0]['header-text'] ) );
+
+			if ( defined( 'HEADER_IMAGE_WIDTH' ) )
+				$args[0]['width'] = (int) HEADER_IMAGE_WIDTH;
+			elseif ( isset( $args[0]['width'] ) )
+				define( 'HEADER_IMAGE_WIDTH', (int) $args[0]['width'] );
+
+			if ( defined( 'HEADER_IMAGE_HEIGHT' ) )
+				$args[0]['height'] = (int) HEADER_IMAGE_HEIGHT;
+			elseif ( isset( $args[0]['height'] ) )
+				define( 'HEADER_IMAGE_HEIGHT', (int) $args[0]['height'] );
+
+			if ( defined( 'HEADER_TEXTCOLOR' ) )
+				$args[0]['default-text-color'] = HEADER_TEXTCOLOR;
+			elseif ( isset( $args[0]['default-text-color'] ) )
+				define( 'HEADER_TEXTCOLOR', $args[0]['default-text-color'] );
+
+			if ( defined( 'HEADER_IMAGE' ) )
+				$args[0]['default-image'] = HEADER_IMAGE;
+			elseif ( isset( $args[0]['default-image'] ) )
+				define( 'HEADER_IMAGE', $args[0]['default-image'] );
+
+			if ( $jit && ! empty( $args[0]['default-image'] ) )
+				$args[0]['random-default'] = false;
+
+			// If headers are supported, and we still don't have a defined width or height,
+			// we have implicit flex sizes.
+			if ( $jit ) {
+				if ( empty( $args[0]['width'] ) && empty( $args[0]['flex-width'] ) )
+					$args[0]['flex-width'] = true;
+				if ( empty( $args[0]['height'] ) && empty( $args[0]['flex-height'] ) )
+					$args[0]['flex-height'] = true;
+			}
+
+			break;
+
+		case 'custom-background' :
+			if ( ! is_array( $args ) )
+				$args = array( 0 => array() );
+
+			$defaults = array(
+				'default-image'          => '',
+				'default-repeat'         => 'repeat',
+				'default-position-x'     => 'left',
+				'default-attachment'     => 'scroll',
+				'default-color'          => '',
+				'wp-head-callback'       => '_custom_background_cb',
+				'admin-head-callback'    => '',
+				'admin-preview-callback' => '',
+			);
+
+			$jit = isset( $args[0]['__jit'] );
+			unset( $args[0]['__jit'] );
+
+			// Merge in data from previous add_theme_support() calls. The first value registered wins.
+			if ( isset( $_wp_theme_features['custom-background'] ) )
+				$args[0] = wp_parse_args( $_wp_theme_features['custom-background'][0], $args[0] );
+
+			if ( $jit )
+				$args[0] = wp_parse_args( $args[0], $defaults );
+
+			if ( defined( 'BACKGROUND_COLOR' ) )
+				$args[0]['default-color'] = BACKGROUND_COLOR;
+			elseif ( isset( $args[0]['default-color'] ) || $jit )
+				define( 'BACKGROUND_COLOR', $args[0]['default-color'] );
+
+			if ( defined( 'BACKGROUND_IMAGE' ) )
+				$args[0]['default-image'] = BACKGROUND_IMAGE;
+			elseif ( isset( $args[0]['default-image'] ) || $jit )
+				define( 'BACKGROUND_IMAGE', $args[0]['default-image'] );
+
+			break;
+
+		// Ensure that 'title-tag' is accessible in the admin.
+		case 'title-tag' :
+			// Can be called in functions.php but must happen before wp_loaded, i.e. not in header.php.
+			if ( did_action( 'wp_loaded' ) ) {
+				/* translators: 1: Theme support 2: hook name */
+				_doing_it_wrong( "add_theme_support( 'title-tag' )", sprintf( __( 'Theme support for %1$s should be registered before the %2$s hook.' ),
+					'<code>title-tag</code>', '<code>wp_loaded</code>' ), '4.1' );
+
+				return false;
+			}
+	}
+
+	$_wp_theme_features[ $feature ] = $args;
+}
+
+function register_theme_directory( $directory ) {
+	global $wp_theme_directories;
+
+	if ( ! file_exists( $directory ) ) {
+		// Try prepending as the theme directory could be relative to the content directory
+		$directory = WP_CONTENT_DIR . '/' . $directory;
+		// If this directory does not exist, return and do not register
+		if ( ! file_exists( $directory ) ) {
+			return false;
+		}
+	}
+
+	if ( ! is_array( $wp_theme_directories ) ) {
+		$wp_theme_directories = array();
+	}
+
+	$untrailed = untrailingslashit( $directory );
+	if ( ! empty( $untrailed ) && ! in_array( $untrailed, $wp_theme_directories ) ) {
+		$wp_theme_directories[] = $untrailed;
+	}
+
+	return true;
+}
+
+function _wp_customize_include() {
+	if ( ! ( ( isset( $_REQUEST['wp_customize'] ) && 'on' == $_REQUEST['wp_customize'] )
+		|| ( is_admin() && 'customize.php' == basename( $_SERVER['PHP_SELF'] ) )
+	) ) {
+		return;
+	}
+
+	require_once ABSPATH . WPINC . '/class-wp-customize-manager.php';
+	$GLOBALS['wp_customize'] = new WP_Customize_Manager();
+}
+
+function add_editor_style( $stylesheet = 'editor-style.css' ) {
+	add_theme_support( 'editor-style' );
+
+	if ( ! is_admin() )
+		return;
+
+	global $editor_styles;
+	$editor_styles = (array) $editor_styles;
+	$stylesheet    = (array) $stylesheet;
+	if ( is_rtl() ) {
+		$rtl_stylesheet = str_replace('.css', '-rtl.css', $stylesheet[0]);
+		$stylesheet[] = $rtl_stylesheet;
+	}
+
+	$editor_styles = array_merge( $editor_styles, $stylesheet );
+}
+
+function register_default_headers( $headers ) {
+	global $_wp_default_headers;
+
+	$_wp_default_headers = array_merge( (array) $_wp_default_headers, (array) $headers );
+}
+
+function check_theme_switched() {
+	if ( $stylesheet = get_option( 'theme_switched' ) ) {
+		$old_theme = wp_get_theme( $stylesheet );
+
+		// Prevent retrieve_widgets() from running since Customizer already called it up front
+		if ( get_option( 'theme_switched_via_customizer' ) ) {
+			remove_action( 'after_switch_theme', '_wp_sidebars_changed' );
+			update_option( 'theme_switched_via_customizer', false );
+		}
+
+		if ( $old_theme->exists() ) {
+			do_action( 'after_switch_theme', $old_theme->get( 'Name' ), $old_theme );
+		} else {
+			/** This action is documented in wp-includes/theme.php */
+			do_action( 'after_switch_theme', $stylesheet );
+		}
+		flush_rewrite_rules();
+
+		update_option( 'theme_switched', false );
+	}
+}
+
+function _custom_header_background_just_in_time() {
+	global $custom_image_header, $custom_background;
+
+	if ( current_theme_supports( 'custom-header' ) ) {
+		// In case any constants were defined after an add_custom_image_header() call, re-run.
+		add_theme_support( 'custom-header', array( '__jit' => true ) );
+
+		$args = get_theme_support( 'custom-header' );
+		if ( $args[0]['wp-head-callback'] )
+			add_action( 'wp_head', $args[0]['wp-head-callback'] );
+
+		if ( is_admin() ) {
+			require_once( ABSPATH . 'wp-admin/custom-header.php' );
+			$custom_image_header = new Custom_Image_Header( $args[0]['admin-head-callback'], $args[0]['admin-preview-callback'] );
+		}
+	}
+
+	if ( current_theme_supports( 'custom-background' ) ) {
+		// In case any constants were defined after an add_custom_background() call, re-run.
+		add_theme_support( 'custom-background', array( '__jit' => true ) );
+
+		$args = get_theme_support( 'custom-background' );
+		add_action( 'wp_head', $args[0]['wp-head-callback'] );
+
+		if ( is_admin() ) {
+			require_once( ABSPATH . 'wp-admin/custom-background.php' );
+			$custom_background = new Custom_Background( $args[0]['admin-head-callback'], $args[0]['admin-preview-callback'] );
+		}
+	}
+}
+
+function get_header_textcolor() {
+	return get_theme_mod('header_textcolor', get_theme_support( 'custom-header', 'default-text-color' ) );
+}
+
+function header_image() {
+	$image = get_header_image();
+	if ( $image ) {
+		echo esc_url( $image );
+	}
+}
+
+function display_header_text() {
+	if ( ! current_theme_supports( 'custom-header', 'header-text' ) )
+		return false;
+
+	$text_color = get_theme_mod( 'header_textcolor', get_theme_support( 'custom-header', 'default-text-color' ) );
+	return 'blank' !== $text_color;
 }
 

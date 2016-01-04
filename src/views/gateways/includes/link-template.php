@@ -187,3 +187,45 @@ function edit_post_link( $text = null, $before = '', $after = '', $id = 0, $clas
 	// echo $before . apply_filters( 'edit_post_link', $link, $post->ID, $text ) . $after;
 }
 
+function admin_url( $path = '', $scheme = 'admin' ) {
+	return get_admin_url( null, $path, $scheme );
+}
+
+function get_admin_url( $blog_id = null, $path = '', $scheme = 'admin' ) {
+	$url = get_site_url($blog_id, 'wp-admin/', $scheme);
+
+	if ( $path && is_string( $path ) )
+		$url .= ltrim( $path, '/' );
+
+	return apply_filters( 'admin_url', $url, $path, $blog_id );
+}
+
+function get_feed_link($feed = '') {
+	global $wp_rewrite;
+
+	$permalink = '';//$wp_rewrite->get_feed_permastruct();
+	if ( '' != $permalink ) {
+		if ( false !== strpos($feed, 'comments_') ) {
+			$feed = str_replace('comments_', '', $feed);
+			$permalink = $wp_rewrite->get_comment_feed_permastruct();
+		}
+
+		if ( get_default_feed() == $feed )
+			$feed = '';
+
+		$permalink = str_replace('%feed%', $feed, $permalink);
+		$permalink = preg_replace('#/+#', '/', "/$permalink");
+		$output =  home_url( user_trailingslashit($permalink, 'feed') );
+	} else {
+		if ( empty($feed) )
+			$feed = get_default_feed();
+
+		if ( false !== strpos($feed, 'comments_') )
+			$feed = str_replace('comments_', 'comments-', $feed);
+
+		$output = home_url("?feed={$feed}");
+	}
+
+	return apply_filters( 'feed_link', $output, $feed );
+}
+

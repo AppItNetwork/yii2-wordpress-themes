@@ -40,3 +40,10 @@ function rest_get_url_prefix() {
 	return apply_filters( 'rest_url_prefix', 'wp-json' );
 }
 
+function rest_api_init() {
+	// rest_api_register_rewrites();
+
+	global $wp;
+	$wp->add_query_var( 'rest_route' );
+}
+

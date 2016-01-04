@@ -20,6 +20,12 @@ class WP extends Component
 	private $_adminAssetClass = 'appitnetwork\wpthemes\assets\WP_AdminAsset';
 	private $_themeAssetClass = 'appitnetwork\wpthemes\assets\WP_ThemeAsset';
 
+	// public function __construct($subject, $matches) {
+	// 	$this->_subject = $subject;
+	// 	$this->_matches = $matches;
+	// 	$this->output = $this->_map();
+	// }
+
 	public function __construct( $config = [] )
 	{	
 		$path = '@appitnetwork/wpthemes/wordpress';
@@ -30,10 +36,27 @@ class WP extends Component
         parent::__construct($config);
     }
 
+	public function main($query_args = '') {
+		$this->init();
+		$this->parse_request($query_args);
+		$this->send_headers();
+		$this->query_posts();
+		$this->handle_404();
+		$this->register_globals();
+
+		do_action_ref_array( 'wp', array( &$this ) );
+	}
+
 	public function init()
 	{ 
         parent::init();
+        $user = Yii::$app->user->identity;
+		return $user;
     }
+
+	// public function init() {
+	// 	wp_get_current_user();
+	// }
 
 	private function _setView($config)
 	{
@@ -275,6 +298,12 @@ class WP extends Component
 	// 		$this->setup_postdata( $this->post );
 	// 	}
 	// }
+
+	public $public_query_vars = array('m', 'p', 'posts', 'w', 'cat', 'withcomments', 'withoutcomments', 's', 'search', 'exact', 'sentence', 'calendar', 'page', 'paged', 'more', 'tb', 'pb', 'author', 'order', 'orderby', 'year', 'monthnum', 'day', 'hour', 'minute', 'second', 'name', 'category_name', 'tag', 'feed', 'author_name', 'static', 'pagename', 'page_id', 'error', 'comments_popup', 'attachment', 'attachment_id', 'subpost', 'subpost_id', 'preview', 'robots', 'taxonomy', 'term', 'cpage', 'post_type', 'title', 'embed' );
+	public function add_query_var($qv) {
+		if ( !in_array($qv, $this->public_query_vars) )
+			$this->public_query_vars[] = $qv;
+	}
 
 }
 

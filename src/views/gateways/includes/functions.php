@@ -424,3 +424,137 @@ function wp_list_filter( $list, $args = array(), $operator = 'AND' ) {
 	return $filtered;
 }
 
+function validate_file( $file, $allowed_files = '' ) {
+	if ( false !== strpos( $file, '..' ) )
+		return 1;
+
+	if ( false !== strpos( $file, './' ) )
+		return 1;
+
+	if ( ! empty( $allowed_files ) && ! in_array( $file, $allowed_files ) )
+		return 3;
+
+	if (':' == substr( $file, 1, 1 ) )
+		return 2;
+
+	return 0;
+}
+
+function wp_maybe_load_widgets() {
+	if ( ! apply_filters( 'load_default_widgets', true ) ) {
+		return;
+	}
+
+	require_once( ABSPATH . WPINC . '/default-widgets.php' );
+
+	add_action( '_admin_menu', 'wp_widgets_add_menu' );
+}
+
+function add_magic_quotes( $array ) {
+	foreach ( (array) $array as $k => $v ) {
+		if ( is_array( $v ) ) {
+			$array[$k] = add_magic_quotes( $v );
+		} else {
+			$array[$k] = addslashes( $v );
+		}
+	}
+	return $array;
+}
+
+function is_blog_installed() { return true; }
+
+function smilies_init() {
+	global $wpsmiliestrans, $wp_smiliessearch;
+
+	// don't bother setting up smilies if they are disabled
+	if ( !get_option( 'use_smilies' ) )
+		return;
+
+	if ( !isset( $wpsmiliestrans ) ) {
+		$wpsmiliestrans = array(
+		':mrgreen:' => 'mrgreen.png',
+		':neutral:' => "\xf0\x9f\x98\x90",
+		':twisted:' => "\xf0\x9f\x98\x88",
+		  ':arrow:' => "\xe2\x9e\xa1",
+		  ':shock:' => "\xf0\x9f\x98\xaf",
+		  ':smile:' => 'simple-smile.png',
+		    ':???:' => "\xf0\x9f\x98\x95",
+		   ':cool:' => "\xf0\x9f\x98\x8e",
+		   ':evil:' => "\xf0\x9f\x91\xbf",
+		   ':grin:' => "\xf0\x9f\x98\x80",
+		   ':idea:' => "\xf0\x9f\x92\xa1",
+		   ':oops:' => "\xf0\x9f\x98\xb3",
+		   ':razz:' => "\xf0\x9f\x98\x9b",
+		   ':roll:' => 'rolleyes.png',
+		   ':wink:' => "\xf0\x9f\x98\x89",
+		    ':cry:' => "\xf0\x9f\x98\xa5",
+		    ':eek:' => "\xf0\x9f\x98\xae",
+		    ':lol:' => "\xf0\x9f\x98\x86",
+		    ':mad:' => "\xf0\x9f\x98\xa1",
+		    ':sad:' => 'frownie.png',
+		      '8-)' => "\xf0\x9f\x98\x8e",
+		      '8-O' => "\xf0\x9f\x98\xaf",
+		      ':-(' => 'frownie.png',
+		      ':-)' => 'simple-smile.png',
+		      ':-?' => "\xf0\x9f\x98\x95",
+		      ':-D' => "\xf0\x9f\x98\x80",
+		      ':-P' => "\xf0\x9f\x98\x9b",
+		      ':-o' => "\xf0\x9f\x98\xae",
+		      ':-x' => "\xf0\x9f\x98\xa1",
+		      ':-|' => "\xf0\x9f\x98\x90",
+		      ';-)' => "\xf0\x9f\x98\x89",
+		// This one transformation breaks regular text with frequency.
+		//     '8)' => "\xf0\x9f\x98\x8e",
+		       '8O' => "\xf0\x9f\x98\xaf",
+		       ':(' => 'frownie.png',
+		       ':)' => 'simple-smile.png',
+		       ':?' => "\xf0\x9f\x98\x95",
+		       ':D' => "\xf0\x9f\x98\x80",
+		       ':P' => "\xf0\x9f\x98\x9b",
+		       ':o' => "\xf0\x9f\x98\xae",
+		       ':x' => "\xf0\x9f\x98\xa1",
+		       ':|' => "\xf0\x9f\x98\x90",
+		       ';)' => "\xf0\x9f\x98\x89",
+		      ':!:' => "\xe2\x9d\x97",
+		      ':?:' => "\xe2\x9d\x93",
+		);
+	}
+
+	if (count($wpsmiliestrans) == 0) {
+		return;
+	}
+
+	/*
+	 * NOTE: we sort the smilies in reverse key order. This is to make sure
+	 * we match the longest possible smilie (:???: vs :?) as the regular
+	 * expression used below is first-match
+	 */
+	krsort($wpsmiliestrans);
+
+	$spaces = wp_spaces_regexp();
+
+	// Begin first "subpattern"
+	$wp_smiliessearch = '/(?<=' . $spaces . '|^)';
+
+	$subchar = '';
+	foreach ( (array) $wpsmiliestrans as $smiley => $img ) {
+		$firstchar = substr($smiley, 0, 1);
+		$rest = substr($smiley, 1);
+
+		// new subpattern?
+		if ($firstchar != $subchar) {
+			if ($subchar != '') {
+				$wp_smiliessearch .= ')(?=' . $spaces . '|$)';  // End previous "subpattern"
+				$wp_smiliessearch .= '|(?<=' . $spaces . '|^)'; // Begin another "subpattern"
+			}
+			$subchar = $firstchar;
+			$wp_smiliessearch .= preg_quote($firstchar, '/') . '(?:';
+		} else {
+			$wp_smiliessearch .= '|';
+		}
+		$wp_smiliessearch .= preg_quote($rest, '/');
+	}
+
+	$wp_smiliessearch .= ')(?=' . $spaces . '|$)/m';
+
+}
