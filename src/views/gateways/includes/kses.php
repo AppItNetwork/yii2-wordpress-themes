@@ -641,3 +641,10 @@ function kses_init_filters() {
 	add_filter('content_filtered_save_pre', 'wp_filter_post_kses');
 }
 
+function valid_unicode($i) {
+	return ( $i == 0x9 || $i == 0xa || $i == 0xd ||
+			($i >= 0x20 && $i <= 0xd7ff) ||
+			($i >= 0xe000 && $i <= 0xfffd) ||
+			($i >= 0x10000 && $i <= 0x10ffff) );
+}
+

@@ -47,3 +47,29 @@ function rest_api_init() {
 	$wp->add_query_var( 'rest_route' );
 }
 
+function rest_api_loaded() {
+	if ( empty( $GLOBALS['wp']->query_vars['rest_route'] ) ) {
+		return;
+	}
+
+	define( 'REST_REQUEST', true );
+
+	/** @var WP_REST_Server $wp_rest_server */
+	global $wp_rest_server;
+
+	$wp_rest_server_class = apply_filters( 'wp_rest_server_class', 'WP_REST_Server' );
+	$wp_rest_server = new $wp_rest_server_class;
+
+	do_action( 'rest_api_init', $wp_rest_server );
+
+	// Fire off the request.
+	$wp_rest_server->serve_request( $GLOBALS['wp']->query_vars['rest_route'] );
+
+	// We're done.
+	die();
+}
+
+function rest_url( $path = '', $scheme = 'json' ) {
+	return get_rest_url( null, $path, $scheme );
+}
+

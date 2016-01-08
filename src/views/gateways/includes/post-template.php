@@ -16,7 +16,8 @@ function body_class( $class = '' ) {
  * @return array Array of classes.
  */
 function get_body_class( $class = '' ) {
-	
+	global $wp_query;
+
 	$classes = array();
 
 	if ( function_exists('is_rtl') && is_rtl() )
@@ -161,11 +162,13 @@ function get_body_class( $class = '' ) {
 	// if ( get_background_color() !== get_theme_support( 'custom-background', 'default-color' ) || get_background_image() )
 	// 	$classes[] = 'custom-background';
 
-	$page = Yii::$app->view->wp_query->get( 'page' );
+	$page = $wp_query->get( 'page' );
+	// $page = Yii::$app->view->wp_query->get( 'page' );
 	// $page = Yii::$app->wpthemes->getAllPages();
 
 	if ( ! $page || $page < 2 )
-		$page = Yii::$app->view->wp_query->get( 'paged' );
+		$page = $wp_query->get( 'paged' );
+		// $page = Yii::$app->view->wp_query->get( 'paged' );
 
 	// if ( $page && $page > 1 && ! is_404() ) {
 	// 	$classes[] = 'paged-' . $page;
@@ -209,7 +212,8 @@ function the_ID() {
 }
 
 function get_the_ID() {
-	$post = Yii::$app->wpthemes->post;
+	// $post = Yii::$app->wpthemes->post;
+	$post = get_post();
 	return ! empty( $post ) ? $post->ID : false;
 }
 
@@ -219,7 +223,8 @@ function post_class( $class = '', $post_id = null ) {
 }
 
 function get_post_class( $class = '', $post_id = null ) {
-	$post = Yii::$app->wpthemes->post;
+	// $post = Yii::$app->wpthemes->post;
+	$post = get_post();
 
 	$classes = array();
 
@@ -311,8 +316,9 @@ function get_post_class( $class = '', $post_id = null ) {
 }
 
 function post_password_required( $post = null ) {
-	$post = Yii::$app->wpthemes->post;
-
+	// $post = Yii::$app->wpthemes->post;
+	$post = get_post();
+	
 	if ( empty( $post->post_password ) )
 		return false;
 
@@ -344,7 +350,8 @@ function the_title( $before = '', $after = '', $echo = true ) {
 }
 
 function get_the_title( $post = 0 ) {
-	$post = Yii::$app->wpthemes->post;
+	$post = get_post();
+	// $post = Yii::$app->wpthemes->post;
 
 	$title = isset( $post->post_title ) ? $post->post_title : '';
 	$id = isset( $post->ID ) ? $post->ID : 0;
@@ -365,8 +372,8 @@ function get_the_title( $post = 0 ) {
 }
 
 function the_content( $more_link_text = null, $strip_teaser = false) {
-	// $content = get_the_content( $more_link_text, $strip_teaser );
-	$content = Yii::$app->wpthemes->post->post_content;
+	$content = get_the_content( $more_link_text, $strip_teaser );
+	// $content = Yii::$app->wpthemes->post->post_content;
 
 	// $content = apply_filters( 'the_content', $content );
 	// $content = str_replace( ']]>', ']]&gt;', $content );
@@ -376,7 +383,9 @@ function the_content( $more_link_text = null, $strip_teaser = false) {
 function get_the_content( $more_link_text = null, $strip_teaser = false ) {
 	global $page, $more, $preview, $pages, $multipage;
 
-	$post = Yii::$app->wpthemes->post;
+	// $post = Yii::$app->wpthemes->post;
+	$post = get_post();
+
 
 	if ( null === $more_link_text )
 		$more_link_text = __( '(more&hellip;)' );

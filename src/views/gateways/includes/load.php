@@ -1,4 +1,5 @@
 <?php
+ use appitnetwork\wpthemes\helpers\wpdb;
 
 function is_admin() {
 	// if ( isset( $GLOBALS['current_screen'] ) )
@@ -87,5 +88,70 @@ function wp_magic_quotes() {
 
 	// Force REQUEST to be GET + POST.
 	$_REQUEST = array_merge( $_GET, $_POST );
+}
+
+function wp_get_mu_plugins() {
+	$mu_plugins = array();
+
+	if ( !is_dir( WPMU_PLUGIN_DIR ) )
+		return $mu_plugins;
+	if ( ! $dh = opendir( WPMU_PLUGIN_DIR ) )
+		return $mu_plugins;
+	while ( ( $plugin = readdir( $dh ) ) !== false ) {
+		if ( substr( $plugin, -4 ) == '.php' )
+			$mu_plugins[] = WPMU_PLUGIN_DIR . '/' . $plugin;
+	}
+	closedir( $dh );
+	sort( $mu_plugins );
+
+	return $mu_plugins;
+}
+
+function wp_get_server_protocol() {
+	$protocol = $_SERVER['SERVER_PROTOCOL'];
+	if ( ! in_array( $protocol, array( 'HTTP/1.1', 'HTTP/2', 'HTTP/2.0' ) ) ) {
+		$protocol = 'HTTP/1.0';
+	}
+	return $protocol;
+}
+
+function require_wp_db() {
+	global $wpdb;
+
+	// require_once( ABSPATH . WPINC . '/wp-db.php' );
+	// if ( file_exists( WP_CONTENT_DIR . '/db.php' ) )
+	// 	require_once( WP_CONTENT_DIR . '/db.php' );
+
+	if ( isset( $wpdb ) )
+		return;
+
+	$wpdb = new wpdb( );
+}
+
+function wp_set_wpdb_vars() {
+	global $wpdb, $table_prefix;
+	if ( !empty( $wpdb->error ) )
+		dead_db();
+
+	$wpdb->field_types = array( 'post_author' => '%d', 'post_parent' => '%d', 'menu_order' => '%d', 'term_id' => '%d', 'term_group' => '%d', 'term_taxonomy_id' => '%d',
+		'parent' => '%d', 'count' => '%d','object_id' => '%d', 'term_order' => '%d', 'ID' => '%d', 'comment_ID' => '%d', 'comment_post_ID' => '%d', 'comment_parent' => '%d',
+		'user_id' => '%d', 'link_id' => '%d', 'link_owner' => '%d', 'link_rating' => '%d', 'option_id' => '%d', 'blog_id' => '%d', 'meta_id' => '%d', 'post_id' => '%d',
+		'user_status' => '%d', 'umeta_id' => '%d', 'comment_karma' => '%d', 'comment_count' => '%d',
+		// multisite:
+		'active' => '%d', 'cat_id' => '%d', 'deleted' => '%d', 'lang_id' => '%d', 'mature' => '%d', 'public' => '%d', 'site_id' => '%d', 'spam' => '%d',
+	);
+
+	$prefix = $wpdb->set_prefix( $table_prefix );
+
+	// if ( is_wp_error( $prefix ) ) {
+	// 	wp_load_translations_early();
+	// 	wp_die(
+	// 		/* translators: 1: $table_prefix 2: wp-config.php */
+	// 		sprintf( __( '<strong>ERROR</strong>: %1$s in %2$s can only contain numbers, letters, and underscores.' ),
+	// 			'<code>$table_prefix</code>',
+	// 			'<code>wp-config.php</code>'
+	// 		)
+	// 	);
+	// }
 }
 

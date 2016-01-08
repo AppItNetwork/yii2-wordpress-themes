@@ -1,4 +1,6 @@
 <?php
+use appitnetwork\wpthemes\helpers\WP_Http;
+
 /**
  * Core HTTP Request API
  *

@@ -61,20 +61,47 @@ class WP_Post extends Component
 	public static function get_instance( $post_id ) {
 		global $wpdb;
 
-		$post_id = (int) $post_id;
+		// $post_id = (int) $post_id;
+// pr($post_id);die;
 		if ( ! $post_id )
 			return false;
 
-		$_post = wp_cache_get( $post_id, 'posts' );
+		// $_post = wp_cache_get( $post_id, 'posts' );
 
 		if ( ! $_post ) {
-			$_post = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE ID = %d LIMIT 1", $post_id ) );
-
+			// $_post = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE ID = %d LIMIT 1", $post_id ) );
+			$_post = [
+				'ID' => $post_id,
+			    'post_author' => '1',
+			    'post_date' => '2016-01-07 15:33:41',
+			    'post_date_gmt' => '2016-01-07 15:33:41',
+			    'post_content' => Yii::$app->view->content,
+			    'post_title' => Yii::$app->view->title,
+			    'post_excerpt' => '',
+			    'post_status' => 'publish',
+			    'comment_status' => 'closed',
+			    'ping_status' => 'closed',
+			    'post_password' => '',
+			    'post_name' => 'test-page',
+			    'to_ping' => '',
+			    'pinged' => '',
+			    'post_modified' => '2016-01-07 15:33:41',
+			    'post_modified_gmt' => '2016-01-07 15:33:41',
+			    'post_content_filtered' => '',
+			    'post_parent' => '0',
+			    'guid' => 'http://portal.silvercoins.col/?page_id=18',
+			    'menu_order' => '0',
+			    'post_type' => 'page',
+			    'post_mime_type' => '',
+			    'comment_count' => '0',
+			];
+			$_post = json_decode(json_encode($_post, false));
+// pr($_post);die;
 			if ( ! $_post )
 				return false;
 
 			$_post = sanitize_post( $_post, 'raw' );
-			wp_cache_add( $_post->ID, $_post, 'posts' );
+			// wp_cache_add( $_post->ID, $_post, 'posts' );
 		} elseif ( empty( $_post->filter ) ) {
 			$_post = sanitize_post( $_post, 'raw' );
 		}
@@ -82,13 +109,13 @@ class WP_Post extends Component
 		return new WP_Post( $_post );
 	}
 
-	// public function __construct( $post ) {
-	public function __construct( $post = null ) {
+	public function __construct( $post ) {
+	// public function __construct( $post = null ) {
 		if ( is_object($post) ) {
 			foreach ( get_object_vars( $post ) as $key => $value )
 				$this->$key = $value;
-		} else {
-			$this->initEmptyObject( $post );
+		// } else {
+		// 	$this->initEmptyObject( $post );
 		}
 
 	}

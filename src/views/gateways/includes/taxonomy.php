@@ -373,3 +373,86 @@ function get_taxonomy_labels( $tax ) {
 	return $labels;
 }
 
+function update_object_term_cache($object_ids, $object_type) {
+	if ( empty($object_ids) )
+		return;
+
+	if ( !is_array($object_ids) )
+		$object_ids = explode(',', $object_ids);
+
+	$object_ids = array_map('intval', $object_ids);
+
+	$taxonomies = get_object_taxonomies($object_type);
+
+	$ids = array();
+	foreach ( (array) $object_ids as $id ) {
+		foreach ( $taxonomies as $taxonomy ) {
+			if ( false === wp_cache_get($id, "{$taxonomy}_relationships") ) {
+				$ids[] = $id;
+				break;
+			}
+		}
+	}
+
+	if ( empty( $ids ) )
+		return false;
+
+	$terms = wp_get_object_terms( $ids, $taxonomies, array(
+		'fields' => 'all_with_object_id',
+		'orderby' => 'none',
+		'update_term_meta_cache' => false,
+	) );
+
+	$object_terms = array();
+	foreach ( (array) $terms as $term )
+		$object_terms[$term->object_id][$term->taxonomy][] = $term;
+
+	foreach ( $ids as $id ) {
+		foreach ( $taxonomies as $taxonomy ) {
+			if ( ! isset($object_terms[$id][$taxonomy]) ) {
+				if ( !isset($object_terms[$id]) )
+					$object_terms[$id] = array();
+				$object_terms[$id][$taxonomy] = array();
+			}
+		}
+	}
+
+	foreach ( $object_terms as $id => $value ) {
+		foreach ( $value as $taxonomy => $terms ) {
+			wp_cache_add( $id, $terms, "{$taxonomy}_relationships" );
+		}
+	}
+}
+
+function get_object_taxonomies( $object, $output = 'names' ) {
+	global $wp_taxonomies;
+
+	if ( is_object($object) ) {
+		if ( $object->post_type == 'attachment' )
+			return get_attachment_taxonomies($object);
+		$object = $object->post_type;
+	}
+
+	$object = (array) $object;
+
+	$taxonomies = array();
+	foreach ( (array) $wp_taxonomies as $tax_name => $tax_obj ) {
+		if ( array_intersect($object, (array) $tax_obj->object_type) ) {
+			if ( 'names' == $output )
+				$taxonomies[] = $tax_name;
+			else
+				$taxonomies[ $tax_name ] = $tax_obj;
+		}
+	}
+
+	return $taxonomies;
+}
+
+function is_object_in_taxonomy( $object_type, $taxonomy ) {
+	$taxonomies = get_object_taxonomies( $object_type );
+	if ( empty( $taxonomies ) ) {
+		return false;
+	}
+	return in_array( $taxonomy, $taxonomies );
+}
+

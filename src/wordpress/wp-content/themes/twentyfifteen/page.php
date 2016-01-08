@@ -17,6 +17,7 @@ get_header(); ?>
 		<main id="main" class="site-main" role="main">
 
 		<?php
+// pr(have_posts());die;
 		// Start the loop.
 		while ( have_posts() ) : the_post();
 

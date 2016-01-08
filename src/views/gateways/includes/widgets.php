@@ -1,4 +1,37 @@
 <?php
+global $wp_registered_sidebars, $wp_registered_widgets, $wp_registered_widget_controls, $wp_registered_widget_updates;
+
+$wp_registered_sidebars = array();
+$wp_registered_widgets = array();
+$wp_registered_widget_controls = array();
+$wp_registered_widget_updates = array();
+$_wp_sidebars_widgets = array();
+
+$GLOBALS['_wp_deprecated_widgets_callbacks'] = array(
+	'wp_widget_pages',
+	'wp_widget_pages_control',
+	'wp_widget_calendar',
+	'wp_widget_calendar_control',
+	'wp_widget_archives',
+	'wp_widget_archives_control',
+	'wp_widget_links',
+	'wp_widget_meta',
+	'wp_widget_meta_control',
+	'wp_widget_search',
+	'wp_widget_recent_entries',
+	'wp_widget_recent_entries_control',
+	'wp_widget_tag_cloud',
+	'wp_widget_tag_cloud_control',
+	'wp_widget_categories',
+	'wp_widget_categories_control',
+	'wp_widget_text',
+	'wp_widget_text_control',
+	'wp_widget_rss',
+	'wp_widget_rss_control',
+	'wp_widget_recent_comments',
+	'wp_widget_recent_comments_control'
+);
+
 
 function is_active_sidebar( $index ) {
 	$index = ( is_int($index) ) ? "sidebar-$index" : sanitize_title($index);
@@ -32,35 +65,32 @@ function wp_get_sidebars_widgets( $deprecated = true ) {
 }
 
 function wp_widgets_init() {
-	if ( !is_blog_installed() )
-		return;
-
-	// register_widget('WP_Widget_Pages');
+	register_widget('WP_Widget_Pages');
 
 	// register_widget('WP_Widget_Calendar');
 
-	// register_widget('WP_Widget_Archives');
+	register_widget('WP_Widget_Archives');
 
 	// if ( get_option( 'link_manager_enabled' ) )
 	// 	register_widget('WP_Widget_Links');
 
-	// register_widget('WP_Widget_Meta');
+	register_widget('WP_Widget_Meta');
 
-	// register_widget('WP_Widget_Search');
+	register_widget('WP_Widget_Search');
 
-	// register_widget('WP_Widget_Text');
+	register_widget('WP_Widget_Text');
 
-	// register_widget('WP_Widget_Categories');
+	register_widget('WP_Widget_Categories');
 
-	// register_widget('WP_Widget_Recent_Posts');
+	register_widget('WP_Widget_Recent_Posts');
 
-	// register_widget('WP_Widget_Recent_Comments');
+	register_widget('WP_Widget_Recent_Comments');
 
 	// register_widget('WP_Widget_RSS');
 
-	// register_widget('WP_Widget_Tag_Cloud');
+	register_widget('WP_Widget_Tag_Cloud');
 
-	// register_widget('WP_Nav_Menu_Widget');
+	register_widget('WP_Nav_Menu_Widget');
 
 	do_action( 'widgets_init' );
 }
@@ -103,5 +133,114 @@ function register_sidebar($args = array()) {
 	do_action( 'register_sidebar', $sidebar );
 
 	return $sidebar['id'];
+}
+
+function _get_widget_id_base($id) {
+	return preg_replace( '/-[0-9]+$/', '', $id );
+}
+
+function is_active_widget($callback = false, $widget_id = false, $id_base = false, $skip_inactive = true) {
+	global $wp_registered_widgets;
+
+	$sidebars_widgets = wp_get_sidebars_widgets();
+
+	if ( is_array($sidebars_widgets) ) {
+		foreach ( $sidebars_widgets as $sidebar => $widgets ) {
+			if ( $skip_inactive && ( 'wp_inactive_widgets' === $sidebar || 'orphaned_widgets' === substr( $sidebar, 0, 16 ) ) ) {
+				continue;
+			}
+
+			if ( is_array($widgets) ) {
+				foreach ( $widgets as $widget ) {
+					if ( ( $callback && isset($wp_registered_widgets[$widget]['callback']) && $wp_registered_widgets[$widget]['callback'] == $callback ) || ( $id_base && _get_widget_id_base($widget) == $id_base ) ) {
+						if ( !$widget_id || $widget_id == $wp_registered_widgets[$widget]['id'] )
+							return $sidebar;
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+function wp_register_sidebar_widget( $id, $name, $output_callback, $options = array() ) {
+	global $wp_registered_widgets, $wp_registered_widget_controls, $wp_registered_widget_updates, $_wp_deprecated_widgets_callbacks;
+
+	$id = strtolower($id);
+
+	if ( empty($output_callback) ) {
+		unset($wp_registered_widgets[$id]);
+		return;
+	}
+
+	$id_base = _get_widget_id_base($id);
+	if ( in_array($output_callback, $_wp_deprecated_widgets_callbacks, true) && !is_callable($output_callback) ) {
+		unset( $wp_registered_widget_controls[ $id ] );
+		unset( $wp_registered_widget_updates[ $id_base ] );
+		return;
+	}
+
+	$defaults = array('classname' => $output_callback);
+	$options = wp_parse_args($options, $defaults);
+	$widget = array(
+		'name' => $name,
+		'id' => $id,
+		'callback' => $output_callback,
+		'params' => array_slice(func_get_args(), 4)
+	);
+	$widget = array_merge($widget, $options);
+
+	if ( is_callable($output_callback) && ( !isset($wp_registered_widgets[$id]) || did_action( 'widgets_init' ) ) ) {
+
+		do_action( 'wp_register_sidebar_widget', $widget );
+		$wp_registered_widgets[$id] = $widget;
+	}
+}
+
+function _register_widget_update_callback($id_base, $update_callback, $options = array()) {
+	global $wp_registered_widget_updates;
+
+	if ( isset($wp_registered_widget_updates[$id_base]) ) {
+		if ( empty($update_callback) )
+			unset($wp_registered_widget_updates[$id_base]);
+		return;
+	}
+
+	$widget = array(
+		'callback' => $update_callback,
+		'params' => array_slice(func_get_args(), 3)
+	);
+
+	$widget = array_merge($widget, $options);
+	$wp_registered_widget_updates[$id_base] = $widget;
+}
+
+function _register_widget_form_callback($id, $name, $form_callback, $options = array()) {
+	global $wp_registered_widget_controls;
+
+	$id = strtolower($id);
+
+	if ( empty($form_callback) ) {
+		unset($wp_registered_widget_controls[$id]);
+		return;
+	}
+
+	if ( isset($wp_registered_widget_controls[$id]) && !did_action( 'widgets_init' ) )
+		return;
+
+	$defaults = array('width' => 250, 'height' => 200 );
+	$options = wp_parse_args($options, $defaults);
+	$options['width'] = (int) $options['width'];
+	$options['height'] = (int) $options['height'];
+
+	$widget = array(
+		'name' => $name,
+		'id' => $id,
+		'callback' => $form_callback,
+		'params' => array_slice(func_get_args(), 4)
+	);
+	$widget = array_merge($widget, $options);
+
+	$wp_registered_widget_controls[$id] = $widget;
 }
 

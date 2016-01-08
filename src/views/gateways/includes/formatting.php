@@ -1212,3 +1212,16 @@ function sanitize_key( $key ) {
 	return apply_filters( 'sanitize_key', $key, $raw_key );
 }
 
+function esc_sql( $data ) {
+	global $wpdb;
+	return $wpdb->_escape( $data );
+}
+
+function sanitize_title_for_query( $title ) {
+	return sanitize_title( $title, '', 'query' );
+}
+
+function wp_basename( $path, $suffix = '' ) {
+	return urldecode( basename( str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) ), $suffix ) );
+}
+

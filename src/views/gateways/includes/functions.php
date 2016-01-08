@@ -558,3 +558,200 @@ function smilies_init() {
 	$wp_smiliessearch .= ')(?=' . $spaces . '|$)/m';
 
 }
+function wp_list_pluck( $list, $field, $index_key = null ) {
+	if ( ! $index_key ) {
+		/*
+		 * This is simple. Could at some point wrap array_column()
+		 * if we knew we had an array of arrays.
+		 */
+		foreach ( $list as $key => $value ) {
+			if ( is_object( $value ) ) {
+				$list[ $key ] = $value->$field;
+			} else {
+				$list[ $key ] = $value[ $field ];
+			}
+		}
+		return $list;
+	}
+
+	/*
+	 * When index_key is not set for a particular item, push the value
+	 * to the end of the stack. This is how array_column() behaves.
+	 */
+	$newlist = array();
+	foreach ( $list as $value ) {
+		if ( is_object( $value ) ) {
+			if ( isset( $value->$index_key ) ) {
+				$newlist[ $value->$index_key ] = $value->$field;
+			} else {
+				$newlist[] = $value->$field;
+			}
+		} else {
+			if ( isset( $value[ $index_key ] ) ) {
+				$newlist[ $value[ $index_key ] ] = $value[ $field ];
+			} else {
+				$newlist[] = $value[ $field ];
+			}
+		}
+	}
+
+	return $newlist;
+}
+
+function wp( $query_vars = '' ) {
+	global $wp, $wp_query, $wp_the_query;
+	$wp->main( $query_vars );
+
+	if ( !isset($wp_the_query) )
+		$wp_the_query = $wp_query;
+}
+
+function wp_get_nocache_headers() {
+	$headers = array(
+		'Expires' => 'Wed, 11 Jan 1984 05:00:00 GMT',
+		'Cache-Control' => 'no-cache, must-revalidate, max-age=0',
+		'Pragma' => 'no-cache',
+	);
+
+	if ( function_exists('apply_filters') ) {
+		$headers = (array) apply_filters( 'nocache_headers', $headers );
+	}
+	$headers['Last-Modified'] = false;
+	return $headers;
+}
+
+function status_header( $code, $description = '' ) {
+	if ( ! $description ) {
+		$description = get_status_header_desc( $code );
+	}
+
+	if ( empty( $description ) ) {
+		return;
+	}
+
+	$protocol = wp_get_server_protocol();
+	$status_header = "$protocol $code $description";
+	if ( function_exists( 'apply_filters' ) )
+
+		$status_header = apply_filters( 'status_header', $status_header, $code, $description, $protocol );
+
+	@header( $status_header, true, $code );
+}
+
+function get_status_header_desc( $code ) {
+	global $wp_header_to_desc;
+
+	$code = absint( $code );
+
+	if ( !isset( $wp_header_to_desc ) ) {
+		$wp_header_to_desc = array(
+			100 => 'Continue',
+			101 => 'Switching Protocols',
+			102 => 'Processing',
+
+			200 => 'OK',
+			201 => 'Created',
+			202 => 'Accepted',
+			203 => 'Non-Authoritative Information',
+			204 => 'No Content',
+			205 => 'Reset Content',
+			206 => 'Partial Content',
+			207 => 'Multi-Status',
+			226 => 'IM Used',
+
+			300 => 'Multiple Choices',
+			301 => 'Moved Permanently',
+			302 => 'Found',
+			303 => 'See Other',
+			304 => 'Not Modified',
+			305 => 'Use Proxy',
+			306 => 'Reserved',
+			307 => 'Temporary Redirect',
+
+			400 => 'Bad Request',
+			401 => 'Unauthorized',
+			402 => 'Payment Required',
+			403 => 'Forbidden',
+			404 => 'Not Found',
+			405 => 'Method Not Allowed',
+			406 => 'Not Acceptable',
+			407 => 'Proxy Authentication Required',
+			408 => 'Request Timeout',
+			409 => 'Conflict',
+			410 => 'Gone',
+			411 => 'Length Required',
+			412 => 'Precondition Failed',
+			413 => 'Request Entity Too Large',
+			414 => 'Request-URI Too Long',
+			415 => 'Unsupported Media Type',
+			416 => 'Requested Range Not Satisfiable',
+			417 => 'Expectation Failed',
+			418 => 'I\'m a teapot',
+			422 => 'Unprocessable Entity',
+			423 => 'Locked',
+			424 => 'Failed Dependency',
+			426 => 'Upgrade Required',
+			428 => 'Precondition Required',
+			429 => 'Too Many Requests',
+			431 => 'Request Header Fields Too Large',
+
+			500 => 'Internal Server Error',
+			501 => 'Not Implemented',
+			502 => 'Bad Gateway',
+			503 => 'Service Unavailable',
+			504 => 'Gateway Timeout',
+			505 => 'HTTP Version Not Supported',
+			506 => 'Variant Also Negotiates',
+			507 => 'Insufficient Storage',
+			510 => 'Not Extended',
+			511 => 'Network Authentication Required',
+		);
+	}
+
+	if ( isset( $wp_header_to_desc[$code] ) )
+		return $wp_header_to_desc[$code];
+	else
+		return '';
+}
+
+function nocache_headers() {
+	$headers = wp_get_nocache_headers();
+
+	unset( $headers['Last-Modified'] );
+
+	// In PHP 5.3+, make sure we are not sending a Last-Modified header.
+	if ( function_exists( 'header_remove' ) ) {
+		@header_remove( 'Last-Modified' );
+	} else {
+		// In PHP 5.2, send an empty Last-Modified header, but only as a
+		// last resort to override a header already sent. #WP23021
+		foreach ( headers_list() as $header ) {
+			if ( 0 === stripos( $header, 'Last-Modified' ) ) {
+				$headers['Last-Modified'] = '';
+				break;
+			}
+		}
+	}
+
+	foreach ( $headers as $name => $field_value )
+		@header("{$name}: {$field_value}");
+}
+
+function mysql2date( $format, $date, $translate = true ) {
+	if ( empty( $date ) )
+		return false;
+
+	if ( 'G' == $format )
+		return strtotime( $date . ' +0000' );
+
+	$i = strtotime( $date );
+
+	if ( 'U' == $format )
+		return $i;
+
+	if ( $translate )
+		return date_i18n( $format, $i );
+	else
+		return date( $format, $i );
+}
+

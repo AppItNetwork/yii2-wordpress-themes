@@ -5,7 +5,8 @@ function has_post_thumbnail( $post = null ) {
 }
 
 function get_post_thumbnail_id( $post = null ) {
-	$post = Yii::$app->wpthemes->post;
+	$post = get_post();
+	// $post = Yii::$app->wpthemes->post;
 	if ( ! $post ) {
 		return '';
 	}

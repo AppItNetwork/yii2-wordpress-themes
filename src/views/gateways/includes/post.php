@@ -1,4 +1,5 @@
 <?php
+use appitnetwork\wpthemes\helpers\WP_Post;
 
 function post_type_supports( $post_type, $feature ) {
 	global $_wp_post_type_features;
@@ -562,5 +563,323 @@ function register_post_status( $post_status, $args = array() ) {
 	$wp_post_statuses[$post_status] = $args;
 
 	return $args;
+}
+
+function get_post_type_object( $post_type ) {
+	global $wp_post_types;
+
+	if ( ! is_scalar( $post_type ) || empty( $wp_post_types[ $post_type ] ) ) {
+		return null;
+	}
+
+	return $wp_post_types[ $post_type ];
+}
+
+function get_post_types( $args = array(), $output = 'names', $operator = 'and' ) {
+	global $wp_post_types;
+
+	$field = ('names' == $output) ? 'name' : false;
+
+	return wp_filter_object_list($wp_post_types, $args, $operator, $field);
+}
+
+function get_post_stati( $args = array(), $output = 'names', $operator = 'and' ) {
+	global $wp_post_statuses;
+
+	$field = ('names' == $output) ? 'name' : false;
+
+	return wp_filter_object_list($wp_post_statuses, $args, $operator, $field);
+}
+
+function get_post( $post = null, $output = OBJECT, $filter = 'raw' ) {
+	if ( empty( $post ) && isset( $GLOBALS['post'] ) )
+		$post = $GLOBALS['post'];
+
+// pr($post);die;
+	if ( $post instanceof WP_Post ) {
+		$_post = $post;
+	} elseif ( is_object( $post ) ) {
+		if ( empty( $post->filter ) ) {
+			$_post = sanitize_post( $post, 'raw' );
+			$_post = new WP_Post( $_post );
+		} elseif ( 'raw' == $post->filter ) {
+			$_post = new WP_Post( $post );
+		} else {
+			$_post = WP_Post::get_instance( $post->ID );
+		}
+	} else {
+		$_post = WP_Post::get_instance( $post );
+	}
+
+// pr($_post);die;
+	if ( ! $_post )
+		return null;
+
+	$_post = $_post->filter( $filter );
+
+	if ( $output == ARRAY_A )
+		return $_post->to_array();
+	elseif ( $output == ARRAY_N )
+		return array_values( $_post->to_array() );
+
+	return $_post;
+}
+
+function sanitize_post( $post, $context = 'display' ) {
+	// pr('sanitize_post');pr($post);die;
+	if ( is_object($post) ) {
+		// Check if post already filtered for this context.
+		if ( isset($post->filter) && $context == $post->filter )
+			return $post;
+		if ( !isset($post->ID) )
+			$post->ID = 0;
+		foreach ( array_keys(get_object_vars($post)) as $field )
+			$post->$field = sanitize_post_field($field, $post->$field, $post->ID, $context);
+		$post->filter = $context;
+	} elseif ( is_array( $post ) ) {
+		// Check if post already filtered for this context.
+		if ( isset($post['filter']) && $context == $post['filter'] )
+			return $post;
+		if ( !isset($post['ID']) )
+			$post['ID'] = 0;
+		foreach ( array_keys($post) as $field )
+			$post[$field] = sanitize_post_field($field, $post[$field], $post['ID'], $context);
+		$post['filter'] = $context;
+	}
+	return $post;
+}
+
+function sanitize_post_field( $field, $value, $post_id, $context = 'display' ) {
+	$int_fields = array('ID', 'post_parent', 'menu_order');
+	if ( in_array($field, $int_fields) )
+		$value = (int) $value;
+
+	// Fields which contain arrays of integers.
+	$array_int_fields = array( 'ancestors' );
+	if ( in_array($field, $array_int_fields) ) {
+		$value = array_map( 'absint', $value);
+		return $value;
+	}
+
+	if ( 'raw' == $context )
+		return $value;
+
+	$prefixed = false;
+	if ( false !== strpos($field, 'post_') ) {
+		$prefixed = true;
+		$field_no_prefix = str_replace('post_', '', $field);
+	}
+
+	if ( 'edit' == $context ) {
+		$format_to_edit = array('post_content', 'post_excerpt', 'post_title', 'post_password');
+
+		if ( $prefixed ) {
+
+			$value = apply_filters( "edit_{$field}", $value, $post_id );
+
+			$value = apply_filters( "{$field_no_prefix}_edit_pre", $value, $post_id );
+		} else {
+			$value = apply_filters( "edit_post_{$field}", $value, $post_id );
+		}
+
+		if ( in_array($field, $format_to_edit) ) {
+			if ( 'post_content' == $field )
+				$value = format_to_edit($value, user_can_richedit());
+			else
+				$value = format_to_edit($value);
+		} else {
+			$value = esc_attr($value);
+		}
+	} elseif ( 'db' == $context ) {
+		if ( $prefixed ) {
+
+			$value = apply_filters( "pre_{$field}", $value );
+
+			$value = apply_filters( "{$field_no_prefix}_save_pre", $value );
+		} else {
+			$value = apply_filters( "pre_post_{$field}", $value );
+
+			$value = apply_filters( "{$field}_pre", $value );
+		}
+	} else {
+
+		// Use display filters by default.
+		if ( $prefixed ) {
+
+			$value = apply_filters( $field, $value, $post_id, $context );
+		} else {
+			$value = apply_filters( "post_{$field}", $value, $post_id, $context );
+		}
+	}
+
+	if ( 'attribute' == $context )
+		$value = esc_attr($value);
+	elseif ( 'js' == $context )
+		$value = esc_js($value);
+
+	return $value;
+}
+
+function update_post_caches( &$posts, $post_type = 'post', $update_term_cache = true, $update_meta_cache = true ) {
+	// No point in doing all this work if we didn't match any posts.
+	if ( !$posts )
+		return;
+
+	update_post_cache($posts);
+
+	$post_ids = array();
+	foreach ( $posts as $post )
+		$post_ids[] = $post->ID;
+
+	if ( ! $post_type )
+		$post_type = 'any';
+
+	if ( $update_term_cache ) {
+		if ( is_array($post_type) ) {
+			$ptypes = $post_type;
+		} elseif ( 'any' == $post_type ) {
+			$ptypes = array();
+			// Just use the post_types in the supplied posts.
+			foreach ( $posts as $post ) {
+				$ptypes[] = $post->post_type;
+			}
+			$ptypes = array_unique($ptypes);
+		} else {
+			$ptypes = array($post_type);
+		}
+
+		if ( ! empty($ptypes) )
+			update_object_term_cache($post_ids, $ptypes);
+	}
+
+	// if ( $update_meta_cache )
+	// 	update_postmeta_cache($post_ids);
+}
+
+function update_post_cache( &$posts ) {
+	if ( ! $posts )
+		return;
+
+	// foreach ( $posts as $post )
+	// 	wp_cache_add( $post->ID, $post, 'posts' );
+}
+
+function is_post_type_viewable( $post_type_object ) {
+	return $post_type_object->publicly_queryable || ( $post_type_object->_builtin && $post_type_object->public );
+}
+
+function get_page_by_path( $page_path, $output = OBJECT, $post_type = 'page' ) {
+	global $wpdb;
+
+	$page_path = rawurlencode(urldecode($page_path));
+	$page_path = str_replace('%2F', '/', $page_path);
+	$page_path = str_replace('%20', ' ', $page_path);
+	$parts = explode( '/', trim( $page_path, '/' ) );
+	// $parts = esc_sql( $parts );
+	$parts = array_map( 'sanitize_title_for_query', $parts );
+
+	$in_string = "'" . implode( "','", $parts ) . "'";
+
+	if ( is_array( $post_type ) ) {
+		$post_types = $post_type;
+	} else {
+		$post_types = array( $post_type, 'attachment' );
+	}
+
+	// $post_types = esc_sql( $post_types );
+	$post_type_in_string = "'" . implode( "','", $post_types ) . "'";
+	$sql = "
+		SELECT ID, post_name, post_parent, post_type
+		FROM $wpdb->posts
+		WHERE post_name IN ($in_string)
+		AND post_type IN ($post_type_in_string)
+	";
+
+	$pages = $wpdb->get_results( $sql, OBJECT_K );
+
+	$revparts = array_reverse( $parts );
+
+	$foundid = 0;
+	foreach ( (array) $pages as $page ) {
+		// pr($page);
+		if ( $page->post_name == $revparts[0] ) {
+			$count = 0;
+			$p = $page;
+			// while ( $p->post_parent != 0 && isset( $pages[ $p->post_parent ] ) ) {
+			// 	$count++;
+			// 	$parent = $pages[ $p->post_parent ];
+			// 	if ( ! isset( $revparts[ $count ] ) || $parent->post_name != $revparts[ $count ] )
+			// 		break;
+			// 	$p = $parent;
+			// }
+
+			// if ( $p->post_parent == 0 && $count+1 == count( $revparts ) && $p->post_name == $revparts[ $count ] ) {
+			if ($p->post_name == $revparts[0]) {
+				$foundid = $page->ID;
+				if ( $page->post_type == $post_type )
+					break;
+			}
+		}
+	}
+// pr($revparts);pr($foundid);pr($output);die;
+
+	if ( $foundid ) {
+		return get_post( $foundid, $output );
+	}
+}
+
+function wp_attachment_is_image( $post = 0 ) {
+	return wp_attachment_is( 'image', $post );
+}
+
+function wp_attachment_is( $type, $post_id = 0 ) {
+	if ( ! $post = get_post( $post_id ) ) {
+		return false;
+	}
+
+	if ( ! $file = get_attached_file( $post->ID ) ) {
+		return false;
+	}
+
+	if ( 0 === strpos( $post->post_mime_type, $type . '/' ) ) {
+		return true;
+	}
+
+	$check = wp_check_filetype( $file );
+	if ( empty( $check['ext'] ) ) {
+		return false;
+	}
+
+	$ext = $check['ext'];
+
+	if ( 'import' !== $post->post_mime_type ) {
+		return $type === $ext;
+	}
+
+	switch ( $type ) {
+	case 'image':
+		$image_exts = array( 'jpg', 'jpeg', 'jpe', 'gif', 'png' );
+		return in_array( $ext, $image_exts );
+
+	case 'audio':
+		return in_array( $ext, wp_get_audio_extensions() );
+
+	case 'video':
+		return in_array( $ext, wp_get_video_extensions() );
+
+	default:
+		return $type === $ext;
+	}
+}
+
+function get_attached_file( $attachment_id, $unfiltered = false ) {
+	$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+	// If the file is relative, prepend upload dir.
+	if ( $file && 0 !== strpos($file, '/') && !preg_match('|^.:\\\|', $file) && ( ($uploads = wp_upload_dir()) && false === $uploads['error'] ) )
+		$file = $uploads['basedir'] . "/$file";
+	if ( $unfiltered )
+		return $file;
+
+	return apply_filters( 'get_attached_file', $file, $attachment_id );
 }
 

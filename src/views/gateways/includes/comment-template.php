@@ -2,7 +2,8 @@
 
 function comments_open( $post_id = null ) {
 
-	$_post = Yii::$app->wpthemes->post;
+	$_post = get_post($post_id);
+	// $_post = Yii::$app->wpthemes->post;
 
 	$open = ( 'open' == $_post->comment_status );
 
@@ -132,5 +133,27 @@ function comments_template( $file = '/comments.php', $separate_comments = false 
 		require( TEMPLATEPATH . $file );
 	else // Backward compat code will be removed in a future release
 		require( ABSPATH . WPINC . '/theme-compat/comments.php');
+}
+
+function get_comments_number( $post_id = 0 ) {
+	$post = get_post( $post_id );
+
+	if ( ! $post ) {
+		$count = 0;
+	} else {
+		$count = $post->comment_count;
+		$post_id = $post->ID;
+	}
+
+	return apply_filters( 'get_comments_number', $count, $post_id );
+}
+
+function pings_open( $post_id = null ) {
+
+	$_post = get_post($post_id);
+
+	$open = ( 'open' == $_post->ping_status );
+
+	return apply_filters( 'pings_open', $open, $post_id );
 }
 

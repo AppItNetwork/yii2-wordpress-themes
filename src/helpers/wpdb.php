@@ -1,4 +1,10 @@
 <?php
+
+namespace appitnetwork\wpthemes\helpers;
+
+use Yii;
+use yii\base\Component;
+
 /**
  * WordPress DB Class
  *
@@ -624,37 +630,38 @@ class wpdb extends Component
 	 * @param string $dbname     MySQL database name
 	 * @param string $dbhost     MySQL database host
 	 */
-	public function __construct( $dbuser, $dbpassword, $dbname, $dbhost ) {
+	// public function __construct( $dbuser, $dbpassword, $dbname, $dbhost ) {
+	public function __construct(  ) {
 		register_shutdown_function( array( $this, '__destruct' ) );
 
-		if ( WP_DEBUG && WP_DEBUG_DISPLAY )
+		if ( YII_DEBUG )
 			$this->show_errors();
 
-		/* Use ext/mysqli if it exists and:
-		 *  - WP_USE_EXT_MYSQL is defined as false, or
-		 *  - We are a development version of WordPress, or
-		 *  - We are running PHP 5.5 or greater, or
-		 *  - ext/mysql is not loaded.
-		 */
-		if ( function_exists( 'mysqli_connect' ) ) {
-			if ( defined( 'WP_USE_EXT_MYSQL' ) ) {
-				$this->use_mysqli = ! WP_USE_EXT_MYSQL;
-			} elseif ( version_compare( phpversion(), '5.5', '>=' ) || ! function_exists( 'mysql_connect' ) ) {
-				$this->use_mysqli = true;
-			} elseif ( false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
-				$this->use_mysqli = true;
-			}
-		}
+		// /* Use ext/mysqli if it exists and:
+		//  *  - WP_USE_EXT_MYSQL is defined as false, or
+		//  *  - We are a development version of WordPress, or
+		//  *  - We are running PHP 5.5 or greater, or
+		//  *  - ext/mysql is not loaded.
+		//  */
+		// if ( function_exists( 'mysqli_connect' ) ) {
+		// 	if ( defined( 'WP_USE_EXT_MYSQL' ) ) {
+		// 		$this->use_mysqli = ! WP_USE_EXT_MYSQL;
+		// 	} elseif ( version_compare( phpversion(), '5.5', '>=' ) || ! function_exists( 'mysql_connect' ) ) {
+		// 		$this->use_mysqli = true;
+		// 	} elseif ( false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
+		// 		$this->use_mysqli = true;
+		// 	}
+		// }
 
-		$this->dbuser = $dbuser;
-		$this->dbpassword = $dbpassword;
-		$this->dbname = $dbname;
-		$this->dbhost = $dbhost;
+		// $this->dbuser = $dbuser;
+		// $this->dbpassword = $dbpassword;
+		// $this->dbname = $dbname;
+		// $this->dbhost = $dbhost;
 
-		// wp-config.php creation will manually connect when ready.
-		if ( defined( 'WP_SETUP_CONFIG' ) ) {
-			return;
-		}
+		// // wp-config.php creation will manually connect when ready.
+		// if ( defined( 'WP_SETUP_CONFIG' ) ) {
+		// 	return;
+		// }
 
 		$this->db_connect();
 	}
@@ -811,6 +818,7 @@ class wpdb extends Component
 	 * @param array $modes Optional. A list of SQL modes to set.
 	 */
 	public function set_sql_mode( $modes = array() ) {
+		return;
 		if ( empty( $modes ) ) {
 			if ( $this->use_mysqli ) {
 				$res = mysqli_query( $this->dbh, 'SELECT @@SESSION.sql_mode' );
@@ -1041,6 +1049,7 @@ class wpdb extends Component
 	 * @param resource|null $dbh Optional link identifier.
 	 */
 	public function select( $db, $dbh = null ) {
+		return;
 		if ( is_null($dbh) )
 			$dbh = $this->dbh;
 
@@ -1459,103 +1468,104 @@ class wpdb extends Component
 		 * Deprecated in 3.9+ when using MySQLi. No equivalent
 		 * $new_link parameter exists for mysqli_* functions.
 		 */
-		$new_link = defined( 'MYSQL_NEW_LINK' ) ? MYSQL_NEW_LINK : true;
-		$client_flags = defined( 'MYSQL_CLIENT_FLAGS' ) ? MYSQL_CLIENT_FLAGS : 0;
+		// $new_link = defined( 'MYSQL_NEW_LINK' ) ? MYSQL_NEW_LINK : true;
+		// $client_flags = defined( 'MYSQL_CLIENT_FLAGS' ) ? MYSQL_CLIENT_FLAGS : 0;
 
-		if ( $this->use_mysqli ) {
-			$this->dbh = mysqli_init();
+		// if ( $this->use_mysqli ) {
+		// 	$this->dbh = mysqli_init();
 
-			// mysqli_real_connect doesn't support the host param including a port or socket
-			// like mysql_connect does. This duplicates how mysql_connect detects a port and/or socket file.
-			$port = null;
-			$socket = null;
-			$host = $this->dbhost;
-			$port_or_socket = strstr( $host, ':' );
-			if ( ! empty( $port_or_socket ) ) {
-				$host = substr( $host, 0, strpos( $host, ':' ) );
-				$port_or_socket = substr( $port_or_socket, 1 );
-				if ( 0 !== strpos( $port_or_socket, '/' ) ) {
-					$port = intval( $port_or_socket );
-					$maybe_socket = strstr( $port_or_socket, ':' );
-					if ( ! empty( $maybe_socket ) ) {
-						$socket = substr( $maybe_socket, 1 );
-					}
-				} else {
-					$socket = $port_or_socket;
-				}
-			}
+		// 	// mysqli_real_connect doesn't support the host param including a port or socket
+		// 	// like mysql_connect does. This duplicates how mysql_connect detects a port and/or socket file.
+		// 	$port = null;
+		// 	$socket = null;
+		// 	$host = $this->dbhost;
+		// 	$port_or_socket = strstr( $host, ':' );
+		// 	if ( ! empty( $port_or_socket ) ) {
+		// 		$host = substr( $host, 0, strpos( $host, ':' ) );
+		// 		$port_or_socket = substr( $port_or_socket, 1 );
+		// 		if ( 0 !== strpos( $port_or_socket, '/' ) ) {
+		// 			$port = intval( $port_or_socket );
+		// 			$maybe_socket = strstr( $port_or_socket, ':' );
+		// 			if ( ! empty( $maybe_socket ) ) {
+		// 				$socket = substr( $maybe_socket, 1 );
+		// 			}
+		// 		} else {
+		// 			$socket = $port_or_socket;
+		// 		}
+		// 	}
 
-			if ( WP_DEBUG ) {
-				mysqli_real_connect( $this->dbh, $host, $this->dbuser, $this->dbpassword, null, $port, $socket, $client_flags );
-			} else {
-				@mysqli_real_connect( $this->dbh, $host, $this->dbuser, $this->dbpassword, null, $port, $socket, $client_flags );
-			}
+		// 	if ( WP_DEBUG ) {
+		// 		mysqli_real_connect( $this->dbh, $host, $this->dbuser, $this->dbpassword, null, $port, $socket, $client_flags );
+		// 	} else {
+		// 		@mysqli_real_connect( $this->dbh, $host, $this->dbuser, $this->dbpassword, null, $port, $socket, $client_flags );
+		// 	}
 
-			if ( $this->dbh->connect_errno ) {
-				$this->dbh = null;
+		// 	if ( $this->dbh->connect_errno ) {
+		// 		$this->dbh = null;
 
-				/* It's possible ext/mysqli is misconfigured. Fall back to ext/mysql if:
-		 		 *  - We haven't previously connected, and
-		 		 *  - WP_USE_EXT_MYSQL isn't set to false, and
-		 		 *  - ext/mysql is loaded.
-		 		 */
-				$attempt_fallback = true;
+		// 		/* It's possible ext/mysqli is misconfigured. Fall back to ext/mysql if:
+		//  		 *  - We haven't previously connected, and
+		//  		 *  - WP_USE_EXT_MYSQL isn't set to false, and
+		//  		 *  - ext/mysql is loaded.
+		//  		 */
+		// 		$attempt_fallback = true;
 
-				if ( $this->has_connected ) {
-					$attempt_fallback = false;
-				} elseif ( defined( 'WP_USE_EXT_MYSQL' ) && ! WP_USE_EXT_MYSQL ) {
-					$attempt_fallback = false;
-				} elseif ( ! function_exists( 'mysql_connect' ) ) {
-					$attempt_fallback = false;
-				}
+		// 		if ( $this->has_connected ) {
+		// 			$attempt_fallback = false;
+		// 		} elseif ( defined( 'WP_USE_EXT_MYSQL' ) && ! WP_USE_EXT_MYSQL ) {
+		// 			$attempt_fallback = false;
+		// 		} elseif ( ! function_exists( 'mysql_connect' ) ) {
+		// 			$attempt_fallback = false;
+		// 		}
 
-				if ( $attempt_fallback ) {
-					$this->use_mysqli = false;
-					return $this->db_connect( $allow_bail );
-				}
-			}
-		} else {
-			if ( WP_DEBUG ) {
-				$this->dbh = mysql_connect( $this->dbhost, $this->dbuser, $this->dbpassword, $new_link, $client_flags );
-			} else {
-				$this->dbh = @mysql_connect( $this->dbhost, $this->dbuser, $this->dbpassword, $new_link, $client_flags );
-			}
-		}
+		// 		if ( $attempt_fallback ) {
+		// 			$this->use_mysqli = false;
+		// 			return $this->db_connect( $allow_bail );
+		// 		}
+		// 	}
+		// } else {
+		// 	if ( WP_DEBUG ) {
+				// $this->dbh = mysql_connect( $this->dbhost, $this->dbuser, $this->dbpassword, $new_link, $client_flags );
+				$this->dbh = Yii::$app->db;
+		// 	} else {
+		// 		$this->dbh = @mysql_connect( $this->dbhost, $this->dbuser, $this->dbpassword, $new_link, $client_flags );
+		// 	}
+		// }
 
-		if ( ! $this->dbh && $allow_bail ) {
-			wp_load_translations_early();
+		// if ( ! $this->dbh && $allow_bail ) {
+		// 	wp_load_translations_early();
 
-			// Load custom DB error template, if present.
-			if ( file_exists( WP_CONTENT_DIR . '/db-error.php' ) ) {
-				require_once( WP_CONTENT_DIR . '/db-error.php' );
-				die();
-			}
+		// 	// Load custom DB error template, if present.
+		// 	if ( file_exists( WP_CONTENT_DIR . '/db-error.php' ) ) {
+		// 		require_once( WP_CONTENT_DIR . '/db-error.php' );
+		// 		die();
+		// 	}
 
-			$message = '<h1>' . __( 'Error establishing a database connection' ) . "</h1>\n";
+		// 	$message = '<h1>' . __( 'Error establishing a database connection' ) . "</h1>\n";
 
-			$message .= '<p>' . sprintf(
-				/* translators: 1: wp-config.php. 2: database host */
-				__( 'This either means that the username and password information in your %1$s file is incorrect or we can&#8217;t contact the database server at %2$s. This could mean your host&#8217;s database server is down.' ),
-				'<code>wp-config.php</code>',
-				'<code>' . htmlspecialchars( $this->dbhost, ENT_QUOTES ) . '</code>'
-			) . "</p>\n";
+		// 	$message .= '<p>' . sprintf(
+		// 		/* translators: 1: wp-config.php. 2: database host */
+		// 		__( 'This either means that the username and password information in your %1$s file is incorrect or we can&#8217;t contact the database server at %2$s. This could mean your host&#8217;s database server is down.' ),
+		// 		'<code>wp-config.php</code>',
+		// 		'<code>' . htmlspecialchars( $this->dbhost, ENT_QUOTES ) . '</code>'
+		// 	) . "</p>\n";
 
-			$message .= "<ul>\n";
-			$message .= '<li>' . __( 'Are you sure you have the correct username and password?' ) . "</li>\n";
-			$message .= '<li>' . __( 'Are you sure that you have typed the correct hostname?' ) . "</li>\n";
-			$message .= '<li>' . __( 'Are you sure that the database server is running?' ) . "</li>\n";
-			$message .= "</ul>\n";
+		// 	$message .= "<ul>\n";
+		// 	$message .= '<li>' . __( 'Are you sure you have the correct username and password?' ) . "</li>\n";
+		// 	$message .= '<li>' . __( 'Are you sure that you have typed the correct hostname?' ) . "</li>\n";
+		// 	$message .= '<li>' . __( 'Are you sure that the database server is running?' ) . "</li>\n";
+		// 	$message .= "</ul>\n";
 
-			$message .= '<p>' . sprintf(
-				/* translators: %s: support forums URL */
-				__( 'If you&#8217;re unsure what these terms mean you should probably contact your host. If you still need help you can always visit the <a href="%s">WordPress Support Forums</a>.' ),
-				__( 'https://wordpress.org/support/' )
-			) . "</p>\n";
+		// 	$message .= '<p>' . sprintf(
+		// 		/* translators: %s: support forums URL */
+		// 		__( 'If you&#8217;re unsure what these terms mean you should probably contact your host. If you still need help you can always visit the <a href="%s">WordPress Support Forums</a>.' ),
+		// 		__( 'https://wordpress.org/support/' )
+		// 	) . "</p>\n";
 
-			$this->bail( $message, 'db_connect_fail' );
+		// 	$this->bail( $message, 'db_connect_fail' );
 
-			return false;
-		} elseif ( $this->dbh ) {
+		// 	return false;
+		// } elseif ( $this->dbh ) {
 			if ( ! $this->has_connected ) {
 				$this->init_charset();
 			}
@@ -1569,9 +1579,9 @@ class wpdb extends Component
 			$this->select( $this->dbname, $this->dbh );
 
 			return true;
-		}
+		// }
 
-		return false;
+		// return false;
 	}
 
 	/**
@@ -1679,114 +1689,117 @@ class wpdb extends Component
 			return false;
 		}
 
-		/**
-		 * Filter the database query.
-		 *
-		 * Some queries are made before the plugins have been loaded,
-		 * and thus cannot be filtered with this method.
-		 *
-		 * @since 2.1.0
-		 *
-		 * @param string $query Database query.
-		 */
 		$query = apply_filters( 'query', $query );
 
 		$this->flush();
 
 		// Log how the function was called
-		$this->func_call = "\$db->query(\"$query\")";
+		// $this->func_call = "\$db->query(\"$query\")";
 
 		// If we're writing to the database, make sure the query will write safely.
-		if ( $this->check_current_query && ! $this->check_ascii( $query ) ) {
-			$stripped_query = $this->strip_invalid_text_from_query( $query );
-			// strip_invalid_text_from_query() can perform queries, so we need
-			// to flush again, just to make sure everything is clear.
-			$this->flush();
-			if ( $stripped_query !== $query ) {
-				$this->insert_id = 0;
-				return false;
-			}
-		}
+		// if ( $this->check_current_query && ! $this->check_ascii( $query ) ) {
+		// 	$stripped_query = $this->strip_invalid_text_from_query( $query );
+		// 	// strip_invalid_text_from_query() can perform queries, so we need
+		// 	// to flush again, just to make sure everything is clear.
+		// 	$this->flush();
+		// 	if ( $stripped_query !== $query ) {
+		// 		$this->insert_id = 0;
+		// 		return false;
+		// 	}
+		// }
 
 		$this->check_current_query = true;
 
 		// Keep track of the last query for debug..
 		$this->last_query = $query;
 
-		$this->_do_query( $query );
+		// $this->_do_query( $query );
 
 		// MySQL server has gone away, try to reconnect
-		$mysql_errno = 0;
-		if ( ! empty( $this->dbh ) ) {
-			if ( $this->use_mysqli ) {
-				$mysql_errno = mysqli_errno( $this->dbh );
-			} else {
-				$mysql_errno = mysql_errno( $this->dbh );
-			}
-		}
+		// $mysql_errno = 0;
+		// if ( ! empty( $this->dbh ) ) {
+		// 	if ( $this->use_mysqli ) {
+		// 		$mysql_errno = mysqli_errno( $this->dbh );
+		// 	} else {
+		// 		$mysql_errno = mysql_errno( $this->dbh );
+		// 	}
+		// }
 
-		if ( empty( $this->dbh ) || 2006 == $mysql_errno ) {
-			if ( $this->check_connection() ) {
-				$this->_do_query( $query );
-			} else {
-				$this->insert_id = 0;
-				return false;
-			}
-		}
+		// if ( empty( $this->dbh ) || 2006 == $mysql_errno ) {
+		// 	if ( $this->check_connection() ) {
+		// 		$this->_do_query( $query );
+		// 	} else {
+		// 		$this->insert_id = 0;
+		// 		return false;
+		// 	}
+		// }
 
 		// If there is an error then take note of it..
-		if ( $this->use_mysqli ) {
-			$this->last_error = mysqli_error( $this->dbh );
-		} else {
-			$this->last_error = mysql_error( $this->dbh );
-		}
+		// if ( $this->use_mysqli ) {
+		// 	$this->last_error = mysqli_error( $this->dbh );
+		// } else {
+		// 	$this->last_error = mysql_error( $this->dbh );
+		// }
 
-		if ( $this->last_error ) {
-			// Clear insert_id on a subsequent failed insert.
-			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) )
-				$this->insert_id = 0;
+		// if ( $this->last_error ) {
+		// 	// Clear insert_id on a subsequent failed insert.
+		// 	if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) )
+		// 		$this->insert_id = 0;
 
-			$this->print_error();
-			return false;
-		}
+		// 	$this->print_error();
+		// 	return false;
+		// }
 
-		if ( preg_match( '/^\s*(create|alter|truncate|drop)\s/i', $query ) ) {
-			$return_val = $this->result;
-		} elseif ( preg_match( '/^\s*(insert|delete|update|replace)\s/i', $query ) ) {
-			if ( $this->use_mysqli ) {
-				$this->rows_affected = mysqli_affected_rows( $this->dbh );
-			} else {
-				$this->rows_affected = mysql_affected_rows( $this->dbh );
-			}
-			// Take note of the insert_id
-			if ( preg_match( '/^\s*(insert|replace)\s/i', $query ) ) {
-				if ( $this->use_mysqli ) {
-					$this->insert_id = mysqli_insert_id( $this->dbh );
-				} else {
-					$this->insert_id = mysql_insert_id( $this->dbh );
-				}
-			}
-			// Return number of rows affected
-			$return_val = $this->rows_affected;
-		} else {
+		// if ( preg_match( '/^\s*(create|alter|truncate|drop)\s/i', $query ) ) {
+		// 	$return_val = $this->result;
+		// } elseif ( preg_match( '/^\s*(insert|delete|update|replace)\s/i', $query ) ) {
+		// 	if ( $this->use_mysqli ) {
+		// 		$this->rows_affected = mysqli_affected_rows( $this->dbh );
+		// 	} else {
+		// 		$this->rows_affected = mysql_affected_rows( $this->dbh );
+		// 	}
+		// 	// Take note of the insert_id
+		// 	if ( preg_match( '/^\s*(insert|replace)\s/i', $query ) ) {
+		// 		if ( $this->use_mysqli ) {
+		// 			$this->insert_id = mysqli_insert_id( $this->dbh );
+		// 		} else {
+		// 			$this->insert_id = mysql_insert_id( $this->dbh );
+		// 		}
+		// 	}
+		// 	// Return number of rows affected
+		// 	$return_val = $this->rows_affected;
+		// } else {
 			$num_rows = 0;
-			if ( $this->use_mysqli && $this->result instanceof mysqli_result ) {
-				while ( $row = @mysqli_fetch_object( $this->result ) ) {
-					$this->last_result[$num_rows] = $row;
-					$num_rows++;
-				}
-			} elseif ( is_resource( $this->result ) ) {
-				while ( $row = @mysql_fetch_object( $this->result ) ) {
-					$this->last_result[$num_rows] = $row;
-					$num_rows++;
-				}
-			}
+			// if ( $this->use_mysqli && $this->result instanceof mysqli_result ) {
+			// 	while ( $row = @mysqli_fetch_object( $this->result ) ) {
+			// 		$this->last_result[$num_rows] = $row;
+			// 		$num_rows++;
+			// 	}
+			// } elseif ( is_resource( $this->result ) ) {
+			// 	while ( $row = @mysql_fetch_object( $this->result ) ) {
+			// 		$this->last_result[$num_rows] = $row;
+			// 		$num_rows++;
+			// 	}
+			// }
+
+			// pr($query);die;
+
+			$row = [
+				'ID' => Yii::$app->controller->id.'__'.Yii::$app->controller->action->id,
+			    'post_name' => Yii::$app->controller->action->id,
+			    'post_parent' => '0',
+			    'post_type' => 'page',
+			];
+			$row = json_decode(json_encode($row, false));
+			$this->result[] = $row;
+			$this->last_result[$num_rows] = $row;
+			$num_rows++;
 
 			// Log number of rows the query returned
 			// and return number of rows selected
 			$this->num_rows = $num_rows;
 			$return_val     = $num_rows;
-		}
+		// }
 
 		return $return_val;
 	}
@@ -1802,20 +1815,20 @@ class wpdb extends Component
 	 * @param string $query The query to run.
 	 */
 	private function _do_query( $query ) {
-		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
-			$this->timer_start();
-		}
+		// if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
+		// 	$this->timer_start();
+		// }
 
-		if ( $this->use_mysqli ) {
-			$this->result = @mysqli_query( $this->dbh, $query );
-		} else {
-			$this->result = @mysql_query( $query, $this->dbh );
-		}
-		$this->num_queries++;
+		// if ( $this->use_mysqli ) {
+		// 	$this->result = @mysqli_query( $this->dbh, $query );
+		// } else {
+		// 	$this->result = @mysql_query( $query, $this->dbh );
+		// }
+		// $this->num_queries++;
 
-		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
-			$this->queries[] = array( $query, $this->timer_stop(), $this->get_caller() );
-		}
+		// if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
+		// 	$this->queries[] = array( $query, $this->timer_stop(), $this->get_caller() );
+		// }
 	}
 
 	/**
@@ -2313,12 +2326,12 @@ class wpdb extends Component
 	 * @return array|object|null Database query results
 	 */
 	public function get_results( $query = null, $output = OBJECT ) {
-		$this->func_call = "\$db->get_results(\"$query\", $output)";
+		// $this->func_call = "\$db->get_results(\"$query\", $output)";
 
-		if ( $this->check_current_query && $this->check_safe_collation( $query ) ) {
-			$this->check_current_query = false;
-		}
-
+		// if ( $this->check_current_query && $this->check_safe_collation( $query ) ) {
+		// 	$this->check_current_query = false;
+		// }
+// pr($query);die;
 		if ( $query ) {
 			$this->query( $query );
 		} else {
@@ -3224,11 +3237,13 @@ class wpdb extends Component
 	 * @return null|string Null on failure, version number on success.
 	 */
 	public function db_version() {
-		if ( $this->use_mysqli ) {
-			$server_info = mysqli_get_server_info( $this->dbh );
-		} else {
-			$server_info = mysql_get_server_info( $this->dbh );
-		}
-		return preg_replace( '/[^0-9.].*/', '', $server_info );
+		return 5.1;
+		// pr($this->dbh->getSchema());die;
+		// if ( $this->use_mysqli ) {
+		// 	$server_info = mysqli_get_server_info( $this->dbh );
+		// } else {
+		// 	$server_info = mysql_get_server_info( $this->dbh );
+		// }
+		// return preg_replace( '/[^0-9.].*/', '', $server_info );
 	}
 }

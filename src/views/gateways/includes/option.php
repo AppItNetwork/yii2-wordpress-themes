@@ -55,7 +55,8 @@ function wp_load_alloptions() {
 		'links_updated_date_format' => 'F j, Y g:i a',
 		'comment_moderation' => '0',
 		'moderation_notify' => '1',
-		'permalink_structure' => '/%year%/%monthnum%/%day%/%postname%/',
+		// 'permalink_structure' => '/%year%/%monthnum%/%day%/%postname%/',
+		'permalink_structure' => '/%postname%/',
 		'hack_file' => '0',
 		'blog_charset' => Yii::$app->charset,
 		'moderation_keys' => '',
@@ -157,7 +158,9 @@ function wp_load_alloptions() {
 		'_transient_timeout_is_multi_author' => '',
 		'_transient_is_multi_author' => '',
 		'theme_mods_twentyfourteen' => '',
-		'theme_mods_twentysixteen' => ''
+		'theme_mods_twentysixteen' => '',
+		'widget_widget_twentyfourteen_ephemera' => '',
+		'featured-content' => '',
 	];
 
 	return $alloptions;

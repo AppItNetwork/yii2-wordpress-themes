@@ -229,3 +229,77 @@ function remove_filter( $tag, $function_to_remove, $priority = 10 ) {
 	return $r;
 }
 
+function apply_filters_ref_array($tag, $args) {
+	global $wp_filter, $merged_filters, $wp_current_filter;
+
+	// Do 'all' actions first
+	if ( isset($wp_filter['all']) ) {
+		$wp_current_filter[] = $tag;
+		$all_args = func_get_args();
+		_wp_call_all_hook($all_args);
+	}
+
+	if ( !isset($wp_filter[$tag]) ) {
+		if ( isset($wp_filter['all']) )
+			array_pop($wp_current_filter);
+		return $args[0];
+	}
+
+	if ( !isset($wp_filter['all']) )
+		$wp_current_filter[] = $tag;
+
+	// Sort
+	if ( !isset( $merged_filters[ $tag ] ) ) {
+		ksort($wp_filter[$tag]);
+		$merged_filters[ $tag ] = true;
+	}
+
+	reset( $wp_filter[ $tag ] );
+
+	do {
+		foreach ( (array) current($wp_filter[$tag]) as $the_ )
+			if ( !is_null($the_['function']) )
+				$args[0] = call_user_func_array($the_['function'], array_slice($args, 0, (int) $the_['accepted_args']));
+
+	} while ( next($wp_filter[$tag]) !== false );
+
+	array_pop( $wp_current_filter );
+
+	return $args[0];
+}
+
+function has_filter($tag, $function_to_check = false) {
+	// Don't reset the internal array pointer
+	$wp_filter = $GLOBALS['wp_filter'];
+
+	$has = ! empty( $wp_filter[ $tag ] );
+
+	// Make sure at least one priority has a filter callback
+	if ( $has ) {
+		$exists = false;
+		foreach ( $wp_filter[ $tag ] as $callbacks ) {
+			if ( ! empty( $callbacks ) ) {
+				$exists = true;
+				break;
+			}
+		}
+
+		if ( ! $exists ) {
+			$has = false;
+		}
+	}
+
+	if ( false === $function_to_check || false === $has )
+		return $has;
+
+	if ( !$idx = _wp_filter_build_unique_id($tag, $function_to_check, false) )
+		return false;
+
+	foreach ( (array) array_keys($wp_filter[$tag]) as $priority ) {
+		if ( isset($wp_filter[$tag][$priority][$idx]) )
+			return $priority;
+	}
+
+	return false;
+}
+

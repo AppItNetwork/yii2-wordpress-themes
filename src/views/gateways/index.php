@@ -1,5 +1,11 @@
 <?php
 
+use appitnetwork\wpthemes\helpers\WP;
+use appitnetwork\wpthemes\helpers\WP_Query;
+use appitnetwork\wpthemes\helpers\WP_Rewrite;
+use appitnetwork\wpthemes\helpers\WP_Widget_Factory;
+use appitnetwork\wpthemes\helpers\WP_Http;
+
 if (!defined( 'DS' ))
 	define( 'DS', DIRECTORY_SEPARATOR );
 
@@ -24,7 +30,13 @@ define( 'EMPTY_TRASH_DAYS', 30 );
 define( 'WP_POST_REVISIONS', true );
 define( 'WP_CRON_LOCK_TIMEOUT', 60 );  // In seconds
 
-$GLOBALS['wp_version'] = '4.4';
+define( 'WP_PLUGIN_DIR', WP_CONTENT_DIR . '/plugins' ); // full path, no trailing slash
+define( 'WP_PLUGIN_URL', WP_CONTENT_URL . '/plugins' ); // full url, no trailing slash
+define( 'PLUGINDIR', 'wp-content/plugins' ); // Relative to ABSPATH. For back compat.
+define( 'WPMU_PLUGIN_DIR', WP_CONTENT_DIR . '/mu-plugins' ); // full path, no trailing slash
+define( 'WPMU_PLUGIN_URL', WP_CONTENT_URL . '/mu-plugins' ); // full url, no trailing slash
+define( 'MUPLUGINDIR', 'wp-content/mu-plugins' ); // Relative to ABSPATH. For back compat.$GLOBALS['wp_version'] = '4.4';
+
 $GLOBALS['wp_db_version'] = 35700;
 $GLOBALS['tinymce_version'] = '4208-20151113';
 $GLOBALS['required_php_version'] = '5.4.16';
@@ -42,6 +54,13 @@ $GLOBALS['table_prefix'] = Yii::$app->db->tablePrefix;
 	require( 'includes/class-wp-error.php' );
 	require( 'includes/plugin.php' );
 	// require( 'includes/pomo/mo.php' );
+
+require_wp_db();
+
+// Set the database table prefix and the format specifiers for database table columns.
+$GLOBALS['table_prefix'] = $table_prefix;
+wp_set_wpdb_vars();
+
 	require( 'includes/default-filters.php' );
 
 // require( ABSPATH . WPINC . '/class-wp-walker.php' );
@@ -72,7 +91,6 @@ $GLOBALS['table_prefix'] = Yii::$app->db->tablePrefix;
 	require( 'includes/revision.php' );
 	require( 'includes/post-formats.php' );
 	require( 'includes/post-thumbnail-template.php' );
-// require( ABSPATH . WPINC . '/post-thumbnail-template.php' );
 // require( ABSPATH . WPINC . '/category.php' );
 // require( ABSPATH . WPINC . '/class-walker-category.php' );
 // require( ABSPATH . WPINC . '/class-walker-category-dropdown.php' );
@@ -82,7 +100,7 @@ $GLOBALS['table_prefix'] = Yii::$app->db->tablePrefix;
 // require( ABSPATH . WPINC . '/class-wp-comment-query.php' );
 // require( ABSPATH . WPINC . '/class-walker-comment.php' );
 	require( 'includes/comment-template.php' );
-// require( ABSPATH . WPINC . '/rewrite.php' );
+	require( 'includes/rewrite.php' );
 // require( ABSPATH . WPINC . '/class-wp-rewrite.php' );
 	require( 'includes/feed.php' );
 // require( ABSPATH . WPINC . '/bookmark.php' );
@@ -102,12 +120,9 @@ $GLOBALS['table_prefix'] = Yii::$app->db->tablePrefix;
 // require( ABSPATH . WPINC . '/class-wp-oembed-controller.php' );
 	require( 'includes/media.php' );
 	require( 'includes/http.php' );
-require( ABSPATH . WPINC . '/class-http.php' );
 // require( ABSPATH . WPINC . '/class-wp-http-streams.php' );
-require( ABSPATH . WPINC . '/class-wp-http-curl.php' );
-require( ABSPATH . WPINC . '/class-wp-http-proxy.php' );
 // require( ABSPATH . WPINC . '/class-wp-http-cookie.php' );
-require( ABSPATH . WPINC . '/class-wp-http-encoding.php' );
+// require( ABSPATH . WPINC . '/class-wp-http-encoding.php' );
 // require( ABSPATH . WPINC . '/class-wp-http-response.php' );
 	require( 'includes/widgets.php' );
 	require( 'includes/class-wp-widget.php' );
@@ -120,7 +135,27 @@ require( ABSPATH . WPINC . '/class-wp-http-encoding.php' );
 // require( ABSPATH . WPINC . '/rest-api/class-wp-rest-response.php' );
 // require( ABSPATH . WPINC . '/rest-api/class-wp-rest-request.php' );
 
+$GLOBALS['wp_plugin_paths'] = array();
+
+// Load must-use plugins.
+foreach ( wp_get_mu_plugins() as $mu_plugin ) {
+	include_once( $mu_plugin );
+}
+unset( $mu_plugin );
+
+// Load network activated plugins.
+if ( is_multisite() ) {
+	foreach ( wp_get_active_network_plugins() as $network_plugin ) {
+		wp_register_plugin_realpath( $network_plugin );
+		include_once( $network_plugin );
+	}
+	unset( $network_plugin );
+}
+
+do_action( 'muplugins_loaded' );
+
 	require( 'includes/vars.php' );
+
 create_initial_taxonomies();
 create_initial_post_types();
 
@@ -155,11 +190,11 @@ wp_magic_quotes();
 
 do_action( 'sanitize_comment_cookies' );
 
-// $GLOBALS['wp_the_query'] = new WP_Query();
-// $GLOBALS['wp_query'] = $GLOBALS['wp_the_query'];
-// $GLOBALS['wp_rewrite'] = new WP_Rewrite();
-$GLOBALS['wp'] = Yii::$app->wpthemes;
-// $GLOBALS['wp_widget_factory'] = new WP_Widget_Factory();
+$GLOBALS['wp_the_query'] = new WP_Query();
+$GLOBALS['wp_query'] = $GLOBALS['wp_the_query'];
+$GLOBALS['wp_rewrite'] = new WP_Rewrite();
+$GLOBALS['wp'] = new WP();
+$GLOBALS['wp_widget_factory'] = new WP_Widget_Factory();
 // $GLOBALS['wp_roles'] = new WP_Roles();
 
 do_action( 'setup_theme' );
@@ -182,14 +217,10 @@ do_action( 'setup_theme' );
 // $GLOBALS['wp_locale'] = new WP_Locale();
 
 // Load the functions for the active theme, for both parent and child theme if applicable.
-// if ( ! wp_installing() || 'wp-activate.php' === $pagenow ) {
 	if ( TEMPLATEPATH !== STYLESHEETPATH && file_exists( STYLESHEETPATH . DS . 'functions.php' ) )
 		include( STYLESHEETPATH . DS . 'functions.php' );
 	if ( file_exists( TEMPLATEPATH . DS . 'functions.php' ) )
 		include( TEMPLATEPATH . DS . 'functions.php' );
-	// include( TEMPLATEPATH . DS . 'functions.php' );
-
-// }
 
 do_action( 'after_setup_theme' );
 
@@ -198,16 +229,6 @@ $GLOBALS['wp']->init();
 do_action( 'init' );
 do_action( 'wp_loaded' );
 
-	require( 'includes/functions.wp-scripts.php' );
-	require( 'includes/functions.wp-styles.php' );
-
-	require( 'includes/class.wp-dependencies.php' );
-	require( 'includes/class.wp-scripts.php' );
-	require( 'includes/class.wp-styles.php' );
-	require( 'includes/class-wp-customize-manager.php' );
-
-
-	
 	ob_start();
     ob_implicit_flush(false);
 		$path = Yii::getAlias( '@app/views/' . $this->context->id . '/' . $this->context->action->id . '.php' );
@@ -217,6 +238,16 @@ do_action( 'wp_loaded' );
 		}
 		include( $path );
 	$this->content = ob_get_clean();
+
+	wp();
+
+	require( 'includes/functions.wp-scripts.php' );
+	require( 'includes/functions.wp-styles.php' );
+
+	require( 'includes/class.wp-dependencies.php' );
+	require( 'includes/class.wp-scripts.php' );
+	require( 'includes/class.wp-styles.php' );
+	require( 'includes/class-wp-customize-manager.php' );
 
 	// pr($this->context->action->id);die;
 	// $this->wp_query->getPages();
