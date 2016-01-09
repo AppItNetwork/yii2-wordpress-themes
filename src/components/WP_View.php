@@ -16,6 +16,7 @@ class WP_View extends \yii\web\View
 {
 
     public $content;
+    public $menu;
 
     public $originalTheme;
     public $wpTheme;

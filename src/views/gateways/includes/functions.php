@@ -755,3 +755,27 @@ function mysql2date( $format, $date, $translate = true ) {
 		return date( $format, $i );
 }
 
+function wp_nonce_url( $actionurl, $action = -1, $name = '_wpnonce' ) {
+	$actionurl = str_replace( '&amp;', '&', $actionurl );
+	return esc_html( add_query_arg( $name, wp_create_nonce( $action ), $actionurl ) );
+}
+
+function _deprecated_function( $function, $version, $replacement = null ) {
+
+	do_action( 'deprecated_function_run', $function, $replacement, $version );
+
+	if ( WP_DEBUG && apply_filters( 'deprecated_function_trigger_error', true ) ) {
+		if ( function_exists( '__' ) ) {
+			if ( ! is_null( $replacement ) )
+				trigger_error( sprintf( __('%1$s is <strong>deprecated</strong> since version %2$s! Use %3$s instead.'), $function, $version, $replacement ) );
+			else
+				trigger_error( sprintf( __('%1$s is <strong>deprecated</strong> since version %2$s with no alternative available.'), $function, $version ) );
+		} else {
+			if ( ! is_null( $replacement ) )
+				trigger_error( sprintf( '%1$s is <strong>deprecated</strong> since version %2$s! Use %3$s instead.', $function, $version, $replacement ) );
+			else
+				trigger_error( sprintf( '%1$s is <strong>deprecated</strong> since version %2$s with no alternative available.', $function, $version ) );
+		}
+	}
+}
+

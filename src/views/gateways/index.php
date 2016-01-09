@@ -5,6 +5,7 @@ use appitnetwork\wpthemes\helpers\WP_Query;
 use appitnetwork\wpthemes\helpers\WP_Rewrite;
 use appitnetwork\wpthemes\helpers\WP_Widget_Factory;
 use appitnetwork\wpthemes\helpers\WP_Http;
+use appitnetwork\wpthemes\helpers\WP_Locale;
 
 if (!defined( 'DS' ))
 	define( 'DS', DIRECTORY_SEPARATOR );
@@ -107,7 +108,7 @@ wp_set_wpdb_vars();
 // require( ABSPATH . WPINC . '/bookmark-template.php' );
 	require( 'includes/kses.php' );
 	require( 'includes/cron.php' );
-// require( ABSPATH . WPINC . '/deprecated.php' );
+	require( 'includes/deprecated.php' );
 	require( 'includes/script-loader.php' );
 	require( 'includes/taxonomy.php' );
 // require( ABSPATH . WPINC . '/class-wp-term.php' );
@@ -134,6 +135,10 @@ wp_set_wpdb_vars();
 // require( ABSPATH . WPINC . '/rest-api/class-wp-rest-server.php' );
 // require( ABSPATH . WPINC . '/rest-api/class-wp-rest-response.php' );
 // require( ABSPATH . WPINC . '/rest-api/class-wp-rest-request.php' );
+	require( 'includes/random_compat/random_int.php' );
+	require( 'includes/random_compat/cast_to_int.php' );
+	require( 'includes/random_compat/byte_safe_strings.php' );
+	require( 'includes/random_compat/random.php' );
 
 $GLOBALS['wp_plugin_paths'] = array();
 
@@ -205,16 +210,16 @@ do_action( 'setup_theme' );
 // Load the default text localization domain.
 // load_default_textdomain();
 
-// $locale = get_locale();
+$locale = get_locale();
 // $locale_file = WP_LANG_DIR . "/$locale.php";
 // if ( ( 0 === validate_file( $locale ) ) && is_readable( $locale_file ) )
 // 	require( $locale_file );
 // unset( $locale_file );
 
 // Pull in locale data after loading text domain.
-// require_once( ABSPATH . WPINC . '/locale.php' );
+require_once( 'includes/locale.php' );
 
-// $GLOBALS['wp_locale'] = new WP_Locale();
+$GLOBALS['wp_locale'] = new WP_Locale();
 
 // Load the functions for the active theme, for both parent and child theme if applicable.
 	if ( TEMPLATEPATH !== STYLESHEETPATH && file_exists( STYLESHEETPATH . DS . 'functions.php' ) )

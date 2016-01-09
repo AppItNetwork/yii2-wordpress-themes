@@ -161,6 +161,16 @@ function wp_load_alloptions() {
 		'theme_mods_twentysixteen' => '',
 		'widget_widget_twentyfourteen_ephemera' => '',
 		'featured-content' => '',
+		'firmness_theme_options' => '',
+		'theme_mods_firmness' => '',
+		'nonce_key' => '',
+		'nonce_salt' => '',
+		'user_roles' => '',
+		'theme_mods_twentytwelve' => '',
+		'theme_mods_twentyten' => '',
+		'twentyeleven_theme_options' => 'a:0:{}',
+		'widget_widget_twentyeleven_ephemera' => '',
+		'theme_mods_twentyeleven' => '',
 	];
 
 	return $alloptions;
@@ -313,3 +323,5 @@ function set_transient( $transient, $value, $expiration = 0 ) {
 }
 
 function update_option( $option, $value, $autoload = null ) { return true; }
+function update_site_option( $option, $value ) { return true; }
+

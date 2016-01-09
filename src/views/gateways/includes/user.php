@@ -54,3 +54,12 @@ function setup_userdata($for_user_id = '') {
 	$user_identity = $user->display_name;
 }
 
+function wp_get_session_token() {
+	$cookie = wp_parse_auth_cookie( '', 'logged_in' );
+	return ! empty( $cookie['token'] ) ? $cookie['token'] : '';
+}
+
+function get_user_meta($user_id, $key = '', $single = false) {
+	return get_metadata('user', $user_id, $key, $single);
+}
+

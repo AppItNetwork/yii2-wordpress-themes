@@ -244,3 +244,69 @@ function _register_widget_form_callback($id, $name, $form_callback, $options = a
 	$wp_registered_widget_controls[$id] = $widget;
 }
 
+function dynamic_sidebar( $index = 1 ) {
+	global $wp_registered_sidebars, $wp_registered_widgets;
+
+	if ( is_int( $index ) ) {
+		$index = "sidebar-$index";
+	} else {
+		$sanitized_index = sanitize_title( $index );
+		foreach ( (array) $wp_registered_sidebars as $key => $value ) {
+			if ( sanitize_title( $value['name'] ) == $sanitized_index ) {
+				$index = $key;
+				break;
+			}
+		}
+	}
+
+	$sidebars_widgets = wp_get_sidebars_widgets();
+	if ( empty( $wp_registered_sidebars[ $index ] ) || empty( $sidebars_widgets[ $index ] ) || ! is_array( $sidebars_widgets[ $index ] ) ) {
+		/** This action is documented in wp-includes/widget.php */
+		do_action( 'dynamic_sidebar_before', $index, false );
+		/** This action is documented in wp-includes/widget.php */
+		do_action( 'dynamic_sidebar_after',  $index, false );
+		/** This filter is documented in wp-includes/widget.php */
+		return apply_filters( 'dynamic_sidebar_has_widgets', false, $index );
+	}
+
+	do_action( 'dynamic_sidebar_before', $index, true );
+	$sidebar = $wp_registered_sidebars[$index];
+
+	$did_one = false;
+	foreach ( (array) $sidebars_widgets[$index] as $id ) {
+
+		if ( !isset($wp_registered_widgets[$id]) ) continue;
+
+		$params = array_merge(
+			array( array_merge( $sidebar, array('widget_id' => $id, 'widget_name' => $wp_registered_widgets[$id]['name']) ) ),
+			(array) $wp_registered_widgets[$id]['params']
+		);
+
+		// Substitute HTML id and class attributes into before_widget
+		$classname_ = '';
+		foreach ( (array) $wp_registered_widgets[$id]['classname'] as $cn ) {
+			if ( is_string($cn) )
+				$classname_ .= '_' . $cn;
+			elseif ( is_object($cn) )
+				$classname_ .= '_' . get_class($cn);
+		}
+		$classname_ = ltrim($classname_, '_');
+		$params[0]['before_widget'] = sprintf($params[0]['before_widget'], $id, $classname_);
+
+		$params = apply_filters( 'dynamic_sidebar_params', $params );
+
+		$callback = $wp_registered_widgets[$id]['callback'];
+
+		do_action( 'dynamic_sidebar', $wp_registered_widgets[ $id ] );
+
+		if ( is_callable($callback) ) {
+			call_user_func_array($callback, $params);
+			$did_one = true;
+		}
+	}
+
+	do_action( 'dynamic_sidebar_after', $index, true );
+
+	return apply_filters( 'dynamic_sidebar_has_widgets', $did_one, $index );
+}
+

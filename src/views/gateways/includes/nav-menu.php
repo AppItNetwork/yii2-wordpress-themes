@@ -1,5 +1,8 @@
 <?php
 
+use appitnetwork\wpthemes\helpers\WP_Term;
+use yii\helpers\Inflector;
+
 function wp_get_nav_menu_object( $menu ) {
 	$menu_obj = false;
 
@@ -8,15 +11,31 @@ function wp_get_nav_menu_object( $menu ) {
 	}
 
 	if ( $menu && ! $menu_obj ) {
-		$menu_obj = get_term( $menu, 'nav_menu' );
+		// if (strtolower($menu) == 'primary-menu' || strtolower($menu) == 'primary_menu') {
+			$menu_obj = [
+				'term_id' => $menu,
+			    'name' => Inflector::camel2words($menu),
+			    'slug' => $menu,
+			    'term_group' => '0',
+			    'term_taxonomy_id' => $menu,
+			    'taxonomy' => 'nav_menu',
+			    'description' => '',
+			    'parent' => '0',
+			    'count' => '1',
+			    'filter' => 'raw'
+		    ];
+		    $menu_obj = json_decode(json_encode($menu_obj, false));
+			$menu_obj = new WP_Term( $menu_obj );
+		// }
+		// $menu_obj = get_term( $menu, 'nav_menu' );
 
-		if ( ! $menu_obj ) {
-			$menu_obj = get_term_by( 'slug', $menu, 'nav_menu' );
-		}
+		// if ( ! $menu_obj ) {
+		// 	$menu_obj = get_term_by( 'slug', $menu, 'nav_menu' );
+		// }
 
-		if ( ! $menu_obj ) {
-			$menu_obj = get_term_by( 'name', $menu, 'nav_menu' );
-		}
+		// if ( ! $menu_obj ) {
+		// 	$menu_obj = get_term_by( 'name', $menu, 'nav_menu' );
+		// }
 	}
 
 	if ( ! $menu_obj || is_wp_error( $menu_obj ) ) {
@@ -36,10 +55,11 @@ function has_nav_menu( $location ) {
 
 	$registered_nav_menus = get_registered_nav_menus();
 	if ( isset( $registered_nav_menus[ $location ] ) ) {
-		$locations = get_nav_menu_locations();
-		$has_nav_menu = ! empty( $locations[ $location ] );
+		// $locations = get_nav_menu_locations();
+		$has_nav_menu = $location;
 	}
-
+// pr($registered_nav_menus);pr($locations);pr($location);die('has_nav_menu');
+// pr(apply_filters( 'has_nav_menu', $has_nav_menu, $location ));die;
 	return apply_filters( 'has_nav_menu', $has_nav_menu, $location );
 }
 
@@ -60,5 +80,32 @@ function register_nav_menus( $locations = array() ) {
 	add_theme_support( 'menus' );
 
 	$_wp_registered_nav_menus = array_merge( (array) $_wp_registered_nav_menus, $locations );
+}
+
+function wp_get_nav_menu_items( $menu, $args = array() ) {
+	// $menu = wp_get_nav_menu_object( $menu );
+	$selected_menu = [];
+	if (isset(Yii::$app->wpthemes->menu[$menu])) {
+		foreach (Yii::$app->wpthemes->menu[$menu] as $key => $item) {
+			$itemObj = new \stdClass;
+			$itemObj->db_id = $item['label'];
+			$itemObj->menu_item_parent = '0';
+			$itemObj->object_id = $item['label'];
+			$itemObj->object = 'custom';
+			$itemObj->type = 'custom';
+			$itemObj->type_label = 'Custom Link';
+			$itemObj->title = $item['label'];
+			$itemObj->url = Yii::$app->urlManager->createUrl($item['url']);
+			$itemObj->target = '';
+			$itemObj->attr_title = '';
+			$itemObj->description = '';
+			$itemObj->classes = [];
+			$itemObj->xfn = '';
+			$itemObj->menu_order = $key;
+			$selected_menu[$key] = $itemObj;
+		}
+	}
+	return $selected_menu;
+	// return apply_filters( 'wp_get_nav_menu_items', $items, $menu, $args );
 }
 

@@ -1,4 +1,5 @@
 <?php
+use appitnetwork\wpthemes\helpers\WP_Roles;
 
 function current_user_can( $capability ) {
 	$current_user = wp_get_current_user();
@@ -362,5 +363,14 @@ function map_meta_cap( $cap, $user_id ) {
 	}
 
 	return apply_filters( 'map_meta_cap', $caps, $cap, $user_id, $args );
+}
+
+function wp_roles() {
+	global $wp_roles;
+
+	if ( ! isset( $wp_roles ) ) {
+		$wp_roles = new WP_Roles();
+	}
+	return $wp_roles;
 }
 

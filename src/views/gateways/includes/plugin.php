@@ -303,3 +303,7 @@ function has_filter($tag, $function_to_check = false) {
 	return false;
 }
 
+function remove_action( $tag, $function_to_remove, $priority = 10 ) {
+	return remove_filter( $tag, $function_to_remove, $priority );
+}
+

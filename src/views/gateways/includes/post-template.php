@@ -536,3 +536,26 @@ function wp_link_pages( $args = '' ) {
 	return $html;
 }
 
+function is_page_template( $template = '' ) {
+	if ( ! is_page() )
+		return false;
+
+	$page_template = get_page_template_slug( get_queried_object_id() );
+
+	if ( empty( $template ) )
+		return (bool) $page_template;
+
+	if ( $template == $page_template )
+		return true;
+
+	if ( is_array( $template ) ) {
+		if ( ( in_array( 'default', $template, true ) && ! $page_template )
+			|| in_array( $page_template, $template, true )
+		) {
+			return true;
+		}
+	}
+
+	return ( 'default' === $template && ! $page_template );
+}
+
