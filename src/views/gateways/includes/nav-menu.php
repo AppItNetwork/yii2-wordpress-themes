@@ -84,28 +84,46 @@ function register_nav_menus( $locations = array() ) {
 
 function wp_get_nav_menu_items( $menu, $args = array() ) {
 	// $menu = wp_get_nav_menu_object( $menu );
-	$selected_menu = [];
+	$selected_menu_items = new \ArrayObject;
 	if (isset(Yii::$app->wpthemes->menu[$menu])) {
 		foreach (Yii::$app->wpthemes->menu[$menu] as $key => $item) {
-			$itemObj = new \stdClass;
-			$itemObj->db_id = $item['label'];
-			$itemObj->menu_item_parent = '0';
-			$itemObj->object_id = $item['label'];
-			$itemObj->object = 'custom';
-			$itemObj->type = 'custom';
-			$itemObj->type_label = 'Custom Link';
-			$itemObj->title = $item['label'];
-			$itemObj->url = Yii::$app->urlManager->createUrl($item['url']);
-			$itemObj->target = '';
-			$itemObj->attr_title = '';
-			$itemObj->description = '';
-			$itemObj->classes = [];
-			$itemObj->xfn = '';
-			$itemObj->menu_order = $key;
-			$selected_menu[$key] = $itemObj;
+			$selected_menu_items[$key] = generateNavMenuItemObject($item, $key);
+			if (isset($item['items'])) {
+				$parent_id = $key;
+				extractNavMenuItemChild($item['items'], $parent_id, $selected_menu_items);
+			}
 		}
 	}
-	return $selected_menu;
+	return $selected_menu_items->getArrayCopy();
 	// return apply_filters( 'wp_get_nav_menu_items', $items, $menu, $args );
+}
+
+function extractNavMenuItemChild($items, $parent_id, $selected_menu_items) {
+	foreach ($items as $key => $item) {
+		$selected_menu_items[$parent_id.'-'.$key] = generateNavMenuItemObject($item, $parent_id.'-'.$key, $parent_id);
+		if (isset($item['items'])) {
+			extractNavMenuItemChild($item['items'], $parent_id.'-'.$key, $selected_menu_items);
+		}
+	}
+}
+
+function generateNavMenuItemObject($item, $key, $parent_id = 0) {
+	$itemObj = new \stdClass;
+	$itemObj->db_id = $key;
+	$itemObj->menu_item_parent = $parent_id;
+	$itemObj->object_id = $item['label'];
+	$itemObj->object = 'custom';
+	$itemObj->type = 'custom';
+	$itemObj->type_label = 'Custom Link';
+	$itemObj->title = $item['label'];
+	$itemObj->url = Yii::$app->urlManager->createUrl($item['url']);
+	$itemObj->target = '';
+	$itemObj->attr_title = '';
+	$itemObj->description = '';
+	$itemObj->classes = [''];
+	$itemObj->xfn = '';
+	$itemObj->menu_order = $key;
+
+	return $itemObj;
 }
 
