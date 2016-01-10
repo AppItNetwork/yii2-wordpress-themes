@@ -1,4 +1,5 @@
 <?php
+
 use appitnetwork\wpthemes\helpers\Walker_Nav_Menu;
 
 function wp_nav_menu( $args = array() ) {
@@ -34,7 +35,6 @@ function wp_nav_menu( $args = array() ) {
 	if ( ! $menu && $args->theme_location )
 		$menu = wp_get_nav_menu_object( $args->theme_location );
 
-// pr($locations);pr($args);pr($menu);die;
 	// get the first menu that has items if we still can't find a menu
 	if ( ! $menu && !$args->theme_location ) {
 		$menus = wp_get_nav_menus();

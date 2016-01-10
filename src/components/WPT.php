@@ -22,6 +22,8 @@ class WPT extends Component
 	private $_themeAssetClass = 'appitnetwork\wpthemes\assets\WP_ThemeAsset';
 
 	public $menu;
+	public $generator;
+	public $generatorUrl;
 
 	public function __construct( $config = [] )
 	{	
@@ -48,7 +50,7 @@ class WPT extends Component
 		if ($selectedTheme && is_dir($path)) {
 		
 			$wpThemesBasePath = ArrayHelper::remove( $config, 'wpThemesBasePath', $themesBasePath );
-	
+
 			$themesBaseUrl = ArrayHelper::remove( $config, 'themesBaseUrl', '@web/../vendor/appitnetwork/yii2-wordpress-themes/src/wordpress/wp-content/themes' );
 			$wpThemesBaseUrl = ArrayHelper::remove( $config, 'wpThemesBaseUrl', $themesBaseUrl );
 
@@ -70,6 +72,17 @@ class WPT extends Component
 
 			$wpThemesLayout = '@appitnetwork/wpthemes/views/layouts/main';
 			Yii::$app->layout = $wpThemesLayout;
+
+			$generatorIsWordPress = ArrayHelper::remove( $config, 'generatorIsWordPress', false );
+			if ($generatorIsWordPress) {
+				ArrayHelper::remove( $config, 'generator' );
+				ArrayHelper::remove( $config, 'generatorUrl' );
+				$this->generator = 'WordPress';
+				$this->generatorUrl = 'https://wordpress.org/';
+			} else {
+				$this->generator = ArrayHelper::remove( $config, 'generator', 'Yii2 with WordPress Themes' );
+				$this->generatorUrl = ArrayHelper::remove( $config, 'generatorUrl', 'https://github.com/AppItNetwork/yii2-wordpress-themes/' );
+			}
 		}
 		return $config;
 	}

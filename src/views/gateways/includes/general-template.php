@@ -492,25 +492,25 @@ function get_the_generator( $type = '' ) {
 
 	switch ( $type ) {
 		case 'html':
-			$gen = '<meta name="generator" content="' . Yii::$app->name . '">';
+			$gen = '<meta name="generator" content="' . Yii::$app->wpthemes->generator . '">';
 			break;
 		case 'xhtml':
-			$gen = '<meta name="generator" content="' . Yii::$app->name . '" />';
+			$gen = '<meta name="generator" content="' . Yii::$app->wpthemes->generator . '" />';
 			break;
 		case 'atom':
-			$gen = '<generator uri="https://wordpress.org/" version="' . get_bloginfo_rss( 'version' ) . '">' . Yii::$app->name . '</generator>';
+			$gen = '<generator uri="'.Yii::$app->wpthemes->generatorUrl.'" version="' . get_bloginfo_rss( 'version' ) . '">' . Yii::$app->wpthemes->generator . '</generator>';
 			break;
 		case 'rss2':
-			$gen = '<generator>https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '</generator>';
+			$gen = '<generator>'.Yii::$app->wpthemes->generatorUrl.'?v=' . get_bloginfo_rss( 'version' ) . '</generator>';
 			break;
 		case 'rdf':
-			$gen = '<admin:generatorAgent rdf:resource="https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '" />';
+			$gen = '<admin:generatorAgent rdf:resource="'.Yii::$app->wpthemes->generatorUrl.'?v=' . get_bloginfo_rss( 'version' ) . '" />';
 			break;
 		case 'comment':
-			$gen = '<!-- generator="' . Yii::$app->name . '" -->';
+			$gen = '<!-- generator="' . Yii::$app->wpthemes->generator . '" -->';
 			break;
 		case 'export':
-			$gen = '<!-- generator="' . Yii::$app->name . '" created="'. date('Y-m-d H:i') . '" -->';
+			$gen = '<!-- generator="' . Yii::$app->wpthemes->generator . '" created="'. date('Y-m-d H:i') . '" -->';
 			break;
 	}
 
