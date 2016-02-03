@@ -883,3 +883,15 @@ function get_attached_file( $attachment_id, $unfiltered = false ) {
 	return apply_filters( 'get_attached_file', $file, $attachment_id );
 }
 
+function is_post_type_hierarchical( $post_type ) {
+	if ( ! post_type_exists( $post_type ) )
+		return false;
+
+	$post_type = get_post_type_object( $post_type );
+	return $post_type->hierarchical;
+}
+
+function post_type_exists( $post_type ) {
+	return (bool) get_post_type_object( $post_type );
+}
+
