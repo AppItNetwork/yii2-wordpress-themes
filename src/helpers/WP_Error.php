@@ -1,4 +1,6 @@
 <?php
+namespace appitnetwork\wpthemes\helpers;
+
 /**
  * WordPress Error API.
  *
