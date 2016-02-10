@@ -234,14 +234,23 @@ $GLOBALS['wp']->init();
 do_action( 'init' );
 do_action( 'wp_loaded' );
 
+	// ob_start();
+ //    ob_implicit_flush(false);
+	// 	$path = Yii::getAlias( '@app/views/' . $this->context->id . '/' . $this->context->action->id . '.php' );
+	// 	pr($path);die;
+	// 	if (!is_file($path)) {
+	// 		$path = Yii::getAlias( '@app/views/' . $this->context->id . '/page.php' );
+	// 	}
+	// 	if (!is_file($path)) {
+	// 		$path = Yii::getAlias( '@app/views/' . $this->context->id . '/error.php' );
+	// 		$this->context->action->id = 'error';
+	// 	}
+	// 	include( $path );
+	// $this->content = ob_get_clean();
+
 	ob_start();
     ob_implicit_flush(false);
-		$path = Yii::getAlias( '@app/views/' . $this->context->id . '/' . $this->context->action->id . '.php' );
-		if (!is_file($path)) {
-			$path = Yii::getAlias( '@app/views/' . $this->context->id . '/error.php' );
-			$this->context->action->id = 'error';
-		}
-		include( $path );
+		include( $this->actualViewFile );
 	$this->content = ob_get_clean();
 
 	wp();

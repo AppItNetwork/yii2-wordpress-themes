@@ -369,3 +369,146 @@ function get_permalink( $post = 0, $leavename = false ) {
 	return apply_filters( 'post_link', $permalink, $post, $leavename );
 }
 
+function adjacent_posts_rel_link( $title = '%title', $in_same_term = false, $excluded_terms = '', $taxonomy = 'category' ) {
+	echo get_adjacent_post_rel_link( $title, $in_same_term, $excluded_terms, true, $taxonomy );
+	echo get_adjacent_post_rel_link( $title, $in_same_term, $excluded_terms, false, $taxonomy );
+}
+
+function get_adjacent_post_rel_link( $title = '%title', $in_same_term = false, $excluded_terms = '', $previous = true, $taxonomy = 'category' ) {
+	if ( $previous && is_attachment() && $post = get_post() )
+		$post = get_post( $post->post_parent );
+	else
+		$post = get_adjacent_post( $in_same_term, $excluded_terms, $previous, $taxonomy );
+
+	if ( empty( $post ) )
+		return;
+
+	$post_title = the_title_attribute( array( 'echo' => false, 'post' => $post ) );
+
+	if ( empty( $post_title ) )
+		$post_title = $previous ? __( 'Previous Post' ) : __( 'Next Post' );
+
+	$date = mysql2date( get_option( 'date_format' ), $post->post_date );
+
+	$title = str_replace( '%title', $post_title, $title );
+	$title = str_replace( '%date', $date, $title );
+
+	$link = $previous ? "<link rel='prev' title='" : "<link rel='next' title='";
+	$link .= esc_attr( $title );
+	$link .= "' href='" . get_permalink( $post ) . "' />\n";
+
+	$adjacent = $previous ? 'previous' : 'next';
+
+	return apply_filters( "{$adjacent}_post_rel_link", $link );
+}
+
+function get_adjacent_post( $in_same_term = false, $excluded_terms = '', $previous = true, $taxonomy = 'category' ) {
+	global $wpdb;
+
+	// if ( ( ! $post = get_post() ) || ! taxonomy_exists( $taxonomy ) )
+		return null;
+
+	$current_post_date = $post->post_date;
+
+	$join = '';
+	$where = '';
+
+	if ( $in_same_term || ! empty( $excluded_terms ) ) {
+		if ( ! empty( $excluded_terms ) && ! is_array( $excluded_terms ) ) {
+			// back-compat, $excluded_terms used to be $excluded_terms with IDs separated by " and "
+			if ( false !== strpos( $excluded_terms, ' and ' ) ) {
+				_deprecated_argument( __FUNCTION__, '3.3', sprintf( __( 'Use commas instead of %s to separate excluded terms.' ), "'and'" ) );
+				$excluded_terms = explode( ' and ', $excluded_terms );
+			} else {
+				$excluded_terms = explode( ',', $excluded_terms );
+			}
+
+			$excluded_terms = array_map( 'intval', $excluded_terms );
+		}
+
+		if ( $in_same_term ) {
+			$join .= " INNER JOIN $wpdb->term_relationships AS tr ON p.ID = tr.object_id INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id";
+			$where .= $wpdb->prepare( "AND tt.taxonomy = %s", $taxonomy );
+
+			if ( ! is_object_in_taxonomy( $post->post_type, $taxonomy ) )
+				return '';
+			$term_array = wp_get_object_terms( $post->ID, $taxonomy, array( 'fields' => 'ids' ) );
+
+			// Remove any exclusions from the term array to include.
+			$term_array = array_diff( $term_array, (array) $excluded_terms );
+			$term_array = array_map( 'intval', $term_array );
+
+			if ( ! $term_array || is_wp_error( $term_array ) )
+				return '';
+
+			$where .= " AND tt.term_id IN (" . implode( ',', $term_array ) . ")";
+		}
+
+		if ( ! empty( $excluded_terms ) ) {
+			$where .= " AND p.ID NOT IN ( SELECT tr.object_id FROM $wpdb->term_relationships tr LEFT JOIN $wpdb->term_taxonomy tt ON (tr.term_taxonomy_id = tt.term_taxonomy_id) WHERE tt.term_id IN (" . implode( $excluded_terms, ',' ) . ') )';
+		}
+	}
+
+	// 'post_status' clause depends on the current user.
+	if ( is_user_logged_in() ) {
+		$user_id = get_current_user_id();
+
+		$post_type_object = get_post_type_object( $post->post_type );
+		if ( empty( $post_type_object ) ) {
+			$post_type_cap    = $post->post_type;
+			$read_private_cap = 'read_private_' . $post_type_cap . 's';
+		} else {
+			$read_private_cap = $post_type_object->cap->read_private_posts;
+		}
+
+		/*
+		 * Results should include private posts belonging to the current user, or private posts where the
+		 * current user has the 'read_private_posts' cap.
+		 */
+		$private_states = get_post_stati( array( 'private' => true ) );
+		$where .= " AND ( p.post_status = 'publish'";
+		foreach ( (array) $private_states as $state ) {
+			if ( current_user_can( $read_private_cap ) ) {
+				$where .= $wpdb->prepare( " OR p.post_status = %s", $state );
+			} else {
+				$where .= $wpdb->prepare( " OR (p.post_author = %d AND p.post_status = %s)", $user_id, $state );
+			}
+		}
+		$where .= " )";
+	} else {
+		$where .= " AND p.post_status = 'publish'";
+	}
+
+	$adjacent = $previous ? 'previous' : 'next';
+	$op = $previous ? '<' : '>';
+	$order = $previous ? 'DESC' : 'ASC';
+
+	$excluded_terms = apply_filters( "get_{$adjacent}_post_excluded_terms", $excluded_terms );
+
+	$join = apply_filters( "get_{$adjacent}_post_join", $join, $in_same_term, $excluded_terms, $taxonomy, $post );
+
+	$where = apply_filters( "get_{$adjacent}_post_where", $wpdb->prepare( "WHERE p.post_date $op %s AND p.post_type = %s $where", $current_post_date, $post->post_type ), $in_same_term, $excluded_terms, $taxonomy, $post );
+
+	$sort  = apply_filters( "get_{$adjacent}_post_sort", "ORDER BY p.post_date $order LIMIT 1", $post );
+
+	$query = "SELECT p.ID FROM $wpdb->posts AS p $join $where $sort";
+	$query_key = 'adjacent_post_' . md5( $query );
+	$result = wp_cache_get( $query_key, 'counts' );
+	if ( false !== $result ) {
+		if ( $result )
+			$result = get_post( $result );
+		return $result;
+	}
+
+	$result = $wpdb->get_var( $query );
+	if ( null === $result )
+		$result = '';
+
+	wp_cache_set( $query_key, $result, 'counts' );
+
+	if ( $result )
+		$result = get_post( $result );
+
+	return $result;
+}
+

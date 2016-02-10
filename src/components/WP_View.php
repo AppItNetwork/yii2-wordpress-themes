@@ -17,6 +17,7 @@ class WP_View extends \yii\web\View
 
     public $content;
     public $menu;
+    public $actualViewFile;
 
     public $originalTheme;
     public $wpTheme;
@@ -41,6 +42,7 @@ class WP_View extends \yii\web\View
                 $this->theme = $this->wpTheme;
             }
 
+            $this->actualViewFile = $this->_defaultFindViewFile( $view, $context );
             $path = '@appitnetwork/wpthemes/views/gateways/index.php';
             return $path;
 

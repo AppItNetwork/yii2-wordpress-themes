@@ -27,6 +27,7 @@ function get_option( $option, $default = false ) {
 }
 
 function wp_load_alloptions() {
+	// pr(Yii::$app->view->theme->selectedTheme);die;
 	$alloptions = [
 		'siteurl' => Yii::$app->request->hostInfo,
 		'home' => Yii::$app->request->hostInfo,
